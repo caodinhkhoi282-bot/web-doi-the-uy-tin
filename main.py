@@ -8,7 +8,7 @@ USERS = {}
 CARDS_SUBMITTED = []  # Danh sách thẻ khách gửi nạp
 BUY_ORDERS = []       # Danh sách đơn khách ĐẶT MUA THẺ -> Đợi bạn gửi
 
-# DANH SÁCH ĐẦY ĐỦ CÁC LOẠI THẺ CÓ HÌNH ẢNH (Dùng Logo bằng CSS cho nhẹ và không lỗi link)
+# DANH SÁCH ĐẦY ĐỦ CÁC LOẠI THẺ CÓ HÌNH ẢNH
 CARD_TYPES = {
     "viettel": {"name": "Viettel", "color": "#E51F27"},
     "vinaphone": {"name": "Vinaphone", "color": "#00A4E4"},
@@ -22,10 +22,15 @@ DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
 
 BASE_CSS = """
 <style>
-    body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .navbar { background-color: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
+    .navbar { background-color: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .navbar a { color: #d32f2f; text-decoration: none; font-weight: bold; margin-left: 15px; }
-    .logo { font-size: 22px; color: #2196F3; font-weight: bold; text-decoration: none; }
+    
+    /* Logo hình ảnh chữ D vàng */
+    .logo-container { display: flex; align-items: center; text-decoration: none; gap: 10px; }
+    .logo-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+    .logo-text { font-size: 20px; color: #d4af37; font-weight: bold; }
+    
     .container { max-width: 700px; margin: 25px auto; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     h2 { color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 18px; margin-bottom: 20px; }
     .form-group { margin-bottom: 15px; }
@@ -34,7 +39,6 @@ BASE_CSS = """
     button { background-color: #2196F3; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
     button:hover { background-color: #1e88e5; }
     
-    /* Giao diện lưới chọn thẻ */
     .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
     .card-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 10px; text-align: center; cursor: pointer; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-decoration: none; transition: transform 0.2s; }
     .card-item:hover { transform: scale(1.05); }
@@ -46,12 +50,65 @@ BASE_CSS = """
     .bg-warning { background-color: #ffc107; color: #fff; }
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
+
+    /* NÚT HỖ TRỢ DISCORD GÓC MÀN HÌNH */
+    .discord-support-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background-color: #111111; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 9999; border: 2px solid #23a55a; }
+    .discord-support-btn::after { content: '➔'; color: #23a55a; font-size: 18px; position: absolute; bottom: 5px; right: 5px; background: #111; border-radius: 50%; width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; font-size: 10px; }
+    .discord-icon { width: 32px; height: 32px; }
+    .support-text-badge { position: absolute; top: -10px; background: #23a55a; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; white-space: nowrap; }
+    
+    /* Hộp thoại bong bóng hỗ trợ */
+    .support-box { display: none; position: fixed; bottom: 90px; right: 20px; width: 280px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #e0e0e0; z-index: 9999; overflow: hidden; font-family: sans-serif; }
+    .support-header { background: #5865F2; color: white; padding: 12px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .support-body { padding: 15px; text-align: center; }
+    .support-body p { margin: 0 0 10px 0; font-size: 13px; color: #444; }
+    .discord-banner { width: 100%; border-radius: 6px; margin-bottom: 12px; }
+    .btn-join-discord { display: block; background: #5865F2; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+    .btn-join-discord:hover { background: #4752c4; }
 </style>
+
+<div class="discord-support-btn" onclick="toggleSupportBox()">
+    <span class="support-text-badge">Hỗ trợ</span>
+    <svg class="discord-icon" viewBox="0 0 127.14 96.36" fill="#5865F2"><path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a74.37,74.37,0,0,0,6.71-11,68.6,68.6,0,0,1-10.57-5.1c.9-.65,1.76-1.34,2.58-2A75.4,75.4,0,0,0,96.44,78.3c.82.71,1.68,1.4,2.58,2a68.6,68.6,0,0,1-10.57,5.1,74.37,74.37,0,0,0,6.71,11,105.73,105.73,0,0,0,31-18.83C130.65,50.22,124.74,27.42,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.7,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.16,46,95.94,53,91,65.69,84.69,65.69Z"/></svg>
+</div>
+
+<div class="support-box" id="supportBox">
+    <div class="support-header">
+        <span>🎧 Kênh Hỗ Trợ 24/7</span>
+        <span style="cursor:pointer; font-size:18px;" onclick="toggleSupportBox()">×</span>
+    </div>
+    <div class="support-body">
+        <p>Bạn gặp sự cố nạp/mua thẻ? Hãy tham gia máy chủ Discord để được hỗ trợ ngay!</p>
+        <img class="discord-banner" src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord Support">
+        <a href="https://discord.gg/x4PqVMxhH" target="_blank" class="btn-join-discord">THAM GIA DISCORD</a>
+    </div>
+</div>
+
+<script>
+function toggleSupportBox() {
+    var box = document.getElementById('supportBox');
+    if(box.style.display === 'block') {
+        box.style.display = 'none';
+    } else {
+        box.style.display = 'block';
+    }
+}
+</script>
 """
 
-LOGIN_HTML = BASE_CSS + """
+# LOGO TRỰC QUAN GỒM HÌNH ẢNH VÀ CHỮ VÀNG LUXURY
+LOGO_HTML_CODE = """
+<div class="logo-container">
+    <img class="logo-img" src="https://pub-c5e31b5cdafb419a91624d102b927404.r2.dev/mock_logo.jpg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/61/61120.png'" alt="Logo">
+    <span class="logo-text">doitheuytin.ok.com</span>
+</div>
+"""
+
+LOGIN_HTML = BASE_CSS + f"""
 <div class="container" style="max-width: 450px; margin-top: 80px;">
-    <div class="logo" style="text-align:center; margin-bottom:20px; font-size:26px;">ĐỔI THẺ UY TÍN</div>
+    <div style="display:flex; justify-content:center; margin-bottom:20px;">
+        {LOGO_HTML_CODE}
+    </div>
     <h2>ĐĂNG NHẬP / ĐĂNG KÝ TỰ ĐỘNG</h2>
     <form method="POST" action="/login">
         <div class="form-group"><label>Tên đăng nhập:</label><input type="text" name="username" required></div>
@@ -62,9 +119,9 @@ LOGIN_HTML = BASE_CSS + """
 </div>
 """
 
-DASHBOARD_HTML = BASE_CSS + """
+DASHBOARD_HTML = BASE_CSS + f"""
 <div class="navbar">
-    <a href="/dashboard" class="logo">doitheuytin.ok.com</a>
+    <a href="/dashboard" style="text-decoration: none;">{LOGO_HTML_CODE}</a>
     <div>
         <span>Xin chào: <b>{{ username }}</b> | Số dư: <b style="color:#28a745;">{{ balance }}đ</b></span>
         <a href="/logout">Đăng xuất</a>
@@ -131,8 +188,8 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """
 
-BUY_DETAIL_HTML = BASE_CSS + """
-<div class="navbar"><a href="/dashboard" class="logo">doitheuytin.ok.com</a></div>
+BUY_DETAIL_HTML = BASE_CSS + f"""
+<div class="navbar"><a href="/dashboard" style="text-decoration: none;">{LOGO_HTML_CODE}</a></div>
 <div class="container">
     <h2>MUA THẺ: {{ card_info.name.upper() }}</h2>
     <div style="background: {{ card_info.color }}; color: white; padding: 15px; border-radius: 6px; text-align: center; margin-bottom: 20px; font-weight: bold;">
@@ -174,7 +231,6 @@ ADMIN_HTML = BASE_CSS + """
     </table>
 
     <h3 style="margin-top:40px;">🛒 2. KHÁCH MUA THẺ (BẠN CẦN GỬI THẺ QUA ĐIỆN THOẠI/ZALO CHO HỌ)</h3>
-    <p style="color: blue;">*Khách đã trả bằng số dư trên web rồi. Bạn hãy lấy mã thẻ thật gửi cho họ qua thông tin SĐT/Tài khoản dưới đây, xong bấm "Đã Gửi Thẻ".</p>
     <table>
         <tr><th>Tài khoản</th><th>Liên hệ (SĐT/Email)</th><th>Loại thẻ mua</th><th>Mệnh giá</th><th>Trạng thái</th><th>Hành động</th></tr>
         {% for o in all_orders %}
@@ -240,15 +296,14 @@ def process_buy():
     amount = int(request.form['amount'])
     
     if USERS[user]['balance'] >= amount:
-        USERS[user]['balance'] -= amount  # Trừ tiền tài khoản web của khách
+        USERS[user]['balance'] -= amount
         BUY_ORDERS.append({
             'id': len(BUY_ORDERS) + 1, 'username': user, 'contact': USERS[user]['contact'],
             'type': card_type, 'amount': amount, 'status': 'Đang xử lý'
         })
-        return "<script>alert('Thanh toán thành công! Đơn hàng đã chuyển tới Admin. Vui lòng đợi nhận mã thẻ.'); window.location='/dashboard';</script>"
-    return "<script>alert('Tài khoản của bạn không đủ số dư để mua mệnh giá này! Hãy nạp thêm thẻ.'); window.location='/dashboard';</script>"
+        return "<script>alert('Thanh toán thành công! Đơn hàng đã chuyển tới Admin.'); window.location='/dashboard';</script>"
+    return "<script>alert('Tài khoản của bạn không đủ số dư!'); window.location='/dashboard';</script>"
 
-# --- KHU VỰC QUẢN LÝ CỦA ADMIN ---
 @app.route('/secret-admin-panel')
 def admin_panel():
     return render_template_string(ADMIN_HTML, all_cards=CARDS_SUBMITTED, all_orders=BUY_ORDERS)
@@ -280,3 +335,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run()
+    
