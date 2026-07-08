@@ -51,7 +51,7 @@ BASE_CSS = """
 
 LOGIN_HTML = BASE_CSS + """
 <div class="container" style="max-width: 450px; margin-top: 80px;">
-    <div class="logo" style="text-align:center; margin-bottom:20px; font-size:26px;">doitheuytin.ok.com</div>
+    <div class="logo" style="text-align:center; margin-bottom:20px; font-size:26px;">ĐỔI THẺ UY TÍN</div>
     <h2>ĐĂNG NHẬP / ĐĂNG KÝ TỰ ĐỘNG</h2>
     <form method="POST" action="/login">
         <div class="form-group"><label>Tên đăng nhập:</label><input type="text" name="username" required></div>
@@ -64,14 +64,13 @@ LOGIN_HTML = BASE_CSS + """
 
 DASHBOARD_HTML = BASE_CSS + """
 <div class="navbar">
-    <a href="/dashboard" class="logo">ĐỔI THẺ UY TÍN/a>
+    <a href="/dashboard" class="logo">doitheuytin.ok.com</a>
     <div>
         <span>Xin chào: <b>{{ username }}</b> | Số dư: <b style="color:#28a745;">{{ balance }}đ</b></span>
         <a href="/logout">Đăng xuất</a>
     </div>
 </div>
 
-<!-- MỤC 1: NẠP THẺ -->
 <div class="container">
     <h2>1. GỬI THẺ CÀO (ĐỔI THÀNH TIỀN)</h2>
     <form method="POST" action="/submit-card">
@@ -93,7 +92,6 @@ DASHBOARD_HTML = BASE_CSS + """
     </form>
 </div>
 
-<!-- MỤC 2: MUA THẺ VỚI HÌNH ẢNH -->
 <div class="container">
     <h2>2. CHỌN LOẠI THẺ CẦN MUA</h2>
     <p style="font-size: 13px; color: #666;">Bấm vào logo loại thẻ bạn muốn mua bên dưới:</p>
@@ -107,7 +105,6 @@ DASHBOARD_HTML = BASE_CSS + """
     </div>
 </div>
 
-<!-- MỤC 3: THEO DÕI LỊCH SỬ -->
 <div class="container">
     <h2>3. LỊCH SỬ GỬI THẺ & MUA THẺ</h2>
     <h3>Thẻ đã gửi đổi tiền:</h3>
@@ -282,5 +279,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-  
+    app.run()
