@@ -1,9 +1,9 @@
 from flask import Flask, render_template_string, request, redirect, url_for, session
 from supabase import create_client, Client
-import postgrest
 
-# === CẤU HÌNH SUPABASE (THAY THÔNG TIN CỦA BẠN VÀO ĐÂY) ===
+# === CẤU HÌNH SUPABASE (ĐÃ ĐIỀN LINK URL CỦA BẠN) ===
 SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
+# Bạn nhớ dán cái mã sb_publis... của bạn vào giữa 2 dấu ngoặc kép ở dòng dưới này nhé:
 SUPABASE_KEY = "sb_publishable_Mr2bWaJ-2j0Ffs5V1J70kw_OrroVSxv"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -22,14 +22,6 @@ CARD_TYPES = {
     "vcoin": {"name": "Vcoin", "color": "#0288D1"}
 }
 DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
-
-# --- TỰ ĐỘNG TẠO BẢNG TRÊN SUPABASE NẾU CHƯA CÓ ---
-def init_db():
-    try:
-        # Kiểm tra bảng users, nếu lỗi chứng tỏ chưa có bảng -> Cần tạo tự động qua RPC hoặc bạn tạo tay trên giao diện Supabase SQL Editor
-        supabase.table("users").select("count", count="exact").limit(1).execute()
-    except Exception:
-        print("Vui lòng vào mục SQL Editor trên Supabase dán lệnh tạo bảng nếu hệ thống báo lỗi!")
 
 BASE_CSS = """
 <style>
@@ -56,16 +48,74 @@ BASE_CSS = """
     .bg-warning { background-color: #ffc107; color: #fff; }
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
-    .discord-support-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background-color: #111111; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 9999; border: 2px solid #23a55a; }
-    .discord-support-btn::after { content: '➔'; color: #23a55a; font-size: 18px; position: absolute; bottom: 5px; right: 5px; background: #111; border-radius: 50%; width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; font-size: 10px; }
-    .discord-icon { width: 32px; height: 32px; }
-    .support-text-badge { position: absolute; top: -10px; background: #23a55a; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; white-space: nowrap; }
-    .support-box { display: none; position: fixed; bottom: 90px; right: 20px; width: 280px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #e0e0e0; z-index: 9999; overflow: hidden; }
+    
+    /* CẬP NHẬT: NÚT DISCORD TO HƠN + NẰM Ở GÓC GIỮA MÀN HÌNH BÊN PHẢI */
+    .discord-support-btn { 
+        position: fixed; 
+        top: 50%; /* Nằm ở chính giữa chiều cao màn hình */
+        right: 15px; 
+        transform: translateY(-50%); /* Căn chuẩn chính giữa */
+        width: 70px; /* Làm nút to lên */
+        height: 70px; /* Làm nút to lên */
+        background-color: #111111; 
+        border-radius: 50%; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        cursor: pointer; 
+        z-index: 9999; 
+        border: 2.5px solid #23a55a; 
+    }
+    .discord-support-btn::after { 
+        content: '➔'; 
+        color: #23a55a; 
+        font-size: 11px; 
+        position: absolute; 
+        bottom: 4px; 
+        right: 4px; 
+        background: #111; 
+        border-radius: 50%; 
+        width: 20px; 
+        height: 20px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+    }
+    .discord-icon { width: 38px; height: 38px; } /* Phóng to logo discord bên trong */
+    .support-text-badge { 
+        position: absolute; 
+        top: -12px; 
+        background: #23a55a; 
+        color: white; 
+        font-size: 11px; 
+        padding: 3px 8px; 
+        border-radius: 12px; 
+        font-weight: bold; 
+        white-space: nowrap; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* BONG BÓNG HỘP THOẠI HỖ TRỢ HIỂN THỊ CẠNH NÚT GIỮA MÀN HÌNH */
+    .support-box { 
+        display: none; 
+        position: fixed; 
+        top: 50%;
+        right: 95px; /* Xuất hiện ngay bên trái của nút hỗ trợ */
+        transform: translateY(-50%);
+        width: 280px; 
+        background: white; 
+        border-radius: 12px; 
+        box-shadow: 0 5px 25px rgba(0,0,0,0.3); 
+        border: 1px solid #e0e0e0; 
+        z-index: 9999; 
+        overflow: hidden; 
+    }
     .support-header { background: #5865F2; color: white; padding: 12px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
     .support-body { padding: 15px; text-align: center; }
     .support-body p { margin: 0 0 10px 0; font-size: 13px; color: #444; }
     .discord-banner { width: 100%; border-radius: 6px; margin-bottom: 12px; }
-    .btn-join-discord { display: block; background: #5865F2; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+    .btn-join-discord { display: block; background: #5865F2; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; text-align: center; }
 </style>
 
 <div class="discord-support-btn" onclick="toggleSupportBox()">
@@ -93,10 +143,11 @@ function toggleSupportBox() {
 </script>
 """
 
+# LOGO CHỮ D VÀNG SANG TRỌNG ĐÚNG NHƯ ẢNH GỬI
 LOGO_HTML_CODE = """
 <div class="logo-container">
-    <img class="logo-img" src="https://pub-c5e31b5cdafb419a91624d102b927404.r2.dev/mock_logo.jpg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/61/61120.png'" alt="Logo">
-    <span class="logo-text">doitheuytin.ok.com</span>
+    <img class="logo-img" src="https://img.freepik.com/premium-vector/d-letter-logo-luxury-gold-color_755034-846.jpg" alt="Logo">
+    <span class="logo-text">doithecaouytinok.com</span>
 </div>
 """
 
@@ -215,10 +266,8 @@ def login():
     password = request.form['password']
     contact = request.form.get('contact', 'Không có')
     
-    # Kiểm tra xem user có trên Database chưa
     res = supabase.table("users").select("*").eq("username", username).execute()
     if not res.data:
-        # Nếu chưa có -> Tạo tài khoản mới vĩnh viễn lưu vào database
         supabase.table("users").insert({"username": username, "password": password, "contact": contact, "balance": 0}).execute()
         balance = 0
     else:
@@ -232,13 +281,10 @@ def dashboard():
     if 'username' not in session: return redirect(url_for('index'))
     user = session['username']
     
-    # Lấy số dư mới nhất tự Database
     res_user = supabase.table("users").select("balance").eq("username", user).execute()
     balance = res_user.data[0]['balance'] if res_user.data else 0
     
-    # Lấy lịch sử thẻ cào của riêng user này
     res_cards = supabase.table("cards").select("*").eq("username", user).execute()
-    
     return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=res_cards.data, card_types=CARD_TYPES, denominations=DENOMINATIONS)
 
 @app.route('/submit-card', methods=['POST'])
@@ -274,12 +320,11 @@ def admin_panel():
     res = supabase.table("cards").select("*").execute()
     return render_template_string(ADMIN_HTML, all_cards=res.data)
 
-@app.route('/admin/approve/<int:card_id>')
+@app.route('/admin/approve/<card_id>')
 def admin_approve(card_id):
     res_card = supabase.table("cards").select("*").eq("id", card_id).execute()
     if res_card.data and res_card.data[0]['status'] == 'Chờ duyệt':
         card = res_card.data[0]
-        # Cộng tiền tài khoản trong database
         res_user = supabase.table("users").select("balance").eq("username", card['username']).execute()
         if res_user.data:
             new_balance = res_user.data[0]['balance'] + card['amount']
@@ -287,7 +332,7 @@ def admin_approve(card_id):
         supabase.table("cards").update({"status": "Thành công"}).eq("id", card_id).execute()
     return redirect(url_for('admin_panel'))
 
-@app.route('/admin/reject/<int:card_id>')
+@app.route('/admin/reject/<card_id>')
 def admin_reject(card_id):
     supabase.table("cards").update({"status": "Thẻ lỗi/Sai mã"}).eq("id", card_id).execute()
     return redirect(url_for('admin_panel'))
@@ -298,5 +343,5 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    init_db()
     app.run()
+    
