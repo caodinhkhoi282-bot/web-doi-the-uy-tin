@@ -1,10 +1,9 @@
 from flask import Flask, render_template_string, request, redirect, url_for, session
 from supabase import create_client, Client
 
-# === CẤU HÌNH SUPABASE (ĐÃ ĐIỀN LINK URL CỦA BẠN) ===
+# === CẤU HÌNH SUPABASE (ĐÃ ĐIỀN SẴN THÔNG TIN THẬT CỦA BẠN) ===
 SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
-# Bạn nhớ dán cái mã sb_publis... của bạn vào giữa 2 dấu ngoặc kép ở dòng dưới này nhé:
-SUPABASE_KEY = "sb_publishable_Mr2bWaJ-2j0Ffs5V1J70kw_OrroVSxv"
+SUPABASE_KEY = "Sb_publishable_Mr2bWaJ-2j0Ffs5V1J70kw_OrroVSxv"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -49,14 +48,14 @@ BASE_CSS = """
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
     
-    /* CẬP NHẬT: NÚT DISCORD TO HƠN + NẰM Ở GÓC GIỮA MÀN HÌNH BÊN PHẢI */
+    /* NÚT DISCORD TO HƠN + NẰM Ở GÓC GIỮA MÀN HÌNH BÊN PHẢI */
     .discord-support-btn { 
         position: fixed; 
-        top: 50%; /* Nằm ở chính giữa chiều cao màn hình */
+        top: 50%; 
         right: 15px; 
-        transform: translateY(-50%); /* Căn chuẩn chính giữa */
-        width: 70px; /* Làm nút to lên */
-        height: 70px; /* Làm nút to lên */
+        transform: translateY(-50%); 
+        width: 70px; 
+        height: 70px; 
         background-color: #111111; 
         border-radius: 50%; 
         box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
@@ -82,7 +81,7 @@ BASE_CSS = """
         justify-content: center; 
         align-items: center; 
     }
-    .discord-icon { width: 38px; height: 38px; } /* Phóng to logo discord bên trong */
+    .discord-icon { width: 38px; height: 38px; }
     .support-text-badge { 
         position: absolute; 
         top: -12px; 
@@ -101,7 +100,7 @@ BASE_CSS = """
         display: none; 
         position: fixed; 
         top: 50%;
-        right: 95px; /* Xuất hiện ngay bên trái của nút hỗ trợ */
+        right: 95px; 
         transform: translateY(-50%);
         width: 280px; 
         background: white; 
@@ -143,7 +142,7 @@ function toggleSupportBox() {
 </script>
 """
 
-# LOGO CHỮ D VÀNG SANG TRỌNG ĐÚNG NHƯ ẢNH GỬI
+# LOGO CHỮ D VÀNG SANG TRỌNG
 LOGO_HTML_CODE = """
 <div class="logo-container">
     <img class="logo-img" src="https://img.freepik.com/premium-vector/d-letter-logo-luxury-gold-color_755034-846.jpg" alt="Logo">
