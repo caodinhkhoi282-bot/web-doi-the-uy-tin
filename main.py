@@ -121,7 +121,7 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     </form>
 </div>
 <div class="container">
-    <h2>2. CHỌN LOẠI THẺ CẦN MUA (GỬI QUA GMAIL)</h2>
+    <h2>2. CHỌN LOẠI THẺ CẦN MUA</h2>
     <div class="card-grid">
         {% for key, val in card_types.items() %}
         <a href="/buy/{{ key }}" class="card-item" style="background-color: {{ val.color }};">Mua {{ val.name }}</a>
