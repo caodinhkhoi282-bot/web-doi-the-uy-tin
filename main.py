@@ -82,6 +82,9 @@ BASE_CSS = """
     label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
     input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-bottom: 5px; }
     button { background-color: #2196F3; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+    .card-item { text-align: center; color: white; font-weight: bold; text-decoration: none; padding: 15px; border-radius: 8px; transition: 0.2s; }
+    .card-item:hover { opacity: 0.9; transform: translateY(-2px); }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; font-size: 13px; }
     th { background-color: #f8f9fa; }
@@ -131,8 +134,21 @@ DASHBOARD_HTML = BASE_CSS + """
         <button type="submit" style="background-color: #28a745;">GỬI THẺ DUYỆT</button>
     </form>
 </div>
+
 <div class="container">
-    <h2>2. LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
+    <h2>2. CHỌN LOẠI THẺ CẦN MUA</h2>
+    <div class="card-grid">
+        {% for key, val in card_types.items() %}
+        <a href="/buy/{{ key }}" class="card-item" style="background-color: {{ val.color }};">
+            <div style="font-size: 20px; margin-bottom: 5px;">💳</div>
+            Mua {{ val.name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="container">
+    <h2>3. LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
     <table>
         <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Trạng thái</th></tr>
         {% for c in my_cards %}
@@ -145,7 +161,7 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """
 
-# Thẻ ẩn khỏi Google tìm kiếm
+# Thẻ meta cấm Google thu thập thông tin trang này
 ADMIN_HTML = """
 <head>
     <meta name="robots" content="noindex, nofollow">
@@ -240,11 +256,10 @@ def submit_card():
     save_cards()
     return redirect(url_for('dashboard'))
 
-# --- ĐƯỜNG DẪN ĐƯỢC GIỮ NGUYÊN NHƯNG CHECK TÀI KHOẢN DINH_KHOI28215 ---
+# --- ĐƯỜNG DẪN ẢN TRANG ADMIN & CHECK ĐÚNG DINH_KHOI28215 ---
 @app.route('/secret-admin-panel')
 def admin_panel():
     load_data()
-    # Kiểm tra phân quyền chính xác tên Admin của bạn
     if 'username' not in session or session['username'] != ADMIN_USERNAME:
         return "<h3>❌ CẢNH BÁO: Bạn không có quyền truy cập trang quản trị bí mật này!</h3>", 403
 
