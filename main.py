@@ -360,11 +360,9 @@ def process_buy(card_key):
     if current_balance < buy_amount:
         return redirect(url_for('dashboard', error=f"Thất bại: Số dư tài khoản không đủ để đặt mua thẻ {buy_amount}đ!"))
         
-    # Trừ tiền của khách ngay lập tức
     new_balance = current_balance - buy_amount
     supabase.table("users").update({"balance": new_balance}).eq("username", user).execute()
     
-    # Tạo đơn mua ở trạng thái Chờ xử lý (Không cấp seri/code tự động nữa)
     supabase.table("cards").insert({
         'username': user, 'type': f"Mua {card_key.upper()}",
         'amount': buy_amount, 'serial': user_contact, 'code': 'Chờ Admin gửi bằng tay', 'status': 'Chờ xử lý'
@@ -381,5 +379,5 @@ def admin_panel():
         user_query = supabase.table("users").select("username", "balance", "contact").eq("username", search_keyword).execute()
         if user_query.data: search_result = user_query.data[0]
         
-    # Thẻ nạp chờ duyệt
-    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").order(
+    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").order("id", desc=True).execute()
+    buy_orders = supabase.table("cards").select("*").eq("status", "Chờ xử lý").order("id", desc=True).execute(
