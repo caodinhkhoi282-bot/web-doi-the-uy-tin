@@ -1,5 +1,4 @@
 import os
-import random  # Đã đưa thư viện lên đầu file để tránh lỗi biên dịch Deploy status 1
 from flask import Flask, render_template_string, request, redirect, url_for, session
 from supabase import create_client, Client
 
@@ -34,7 +33,7 @@ BASE_CSS = """
     .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #dfb76c; }
     .brand-name { font-size: 18px; color: #2196F3; font-weight: bold; }
     .navbar a.logout-btn { color: #d32f2f; text-decoration: none; font-weight: bold; margin-left: 15px; }
-    .container { max-width: 700px; margin: 25px auto; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .container { max-width: 750px; margin: 25px auto; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .auth-box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; background: #fafafa; margin-bottom: 20px; }
     h2 { color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 18px; margin-bottom: 20px; }
     h3 { margin-top: 0; color: #333; font-size: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
@@ -91,7 +90,7 @@ LOGIN_HTML = BASE_CSS + """
         <form method="POST" action="/register">
             <div class="form-group"><label>Tên đăng nhập mới:</label><input type="text" name="username" required></div>
             <div class="form-group"><label>Mật khẩu:</label><input type="password" name="password" required></div>
-            <div class="form-group"><label>Số điện thoại / Email liên hệ:</label><input type="text" name="contact" placeholder="Nhập SĐT hoặc Email để bảo mật thẻ" required></div>
+            <div class="form-group"><label>Số điện thoại / Email liên hệ:</label><input type="text" name="contact" placeholder="Nhập SĐT hoặc Email để nhận thẻ qua Gmail" required></div>
             <button type="submit" style="background-color: #4caf50;">TẠO TÀI KHOẢN MỚI</button>
         </form>
     </div>
@@ -128,11 +127,11 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 
 <div class="container">
-    <h2>2. CHỌN LOẠI THẺ CẦN MUA</h2>
+    <h2>2. CHỌN LOẠI THẺ CẦN MUA (ADMIN DUYỆT GỬI QUA GMAIL)</h2>
     <div class="card-grid">
         {% for key, val in card_types.items() %}
         <a href="/buy/{{ key }}" class="card-item" style="background-color: {{ val.color }};">
-            <div style="font-size: 20px; margin-bottom: 5px;">💳</div>
+            <div style="font-size: 20px; margin-bottom: 5px;">🛒</div>
             Mua {{ val.name }}
         </a>
         {% endfor %}
@@ -140,13 +139,31 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 
 <div class="container">
-    <h2>3. LỊCH SỬ GỬI/MUA THẺ CỦA BẠN</h2>
+    <h2>3. LỊCH SỬ ĐỔI THẺ (NẠP TIỀN VÀO WEB)</h2>
     <table>
-        <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Trạng thái</th></tr>
-        {% for c in my_cards %}
+        <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Thông tin thẻ</th><th>Trạng thái</th></tr>
+        {% for c in deposit_cards %}
         <tr>
             <td>{{ c.type.upper() }}</td><td>{{ c.amount }}đ</td>
+            <td>S: {{ c.serial }} <br> M: {{ c.code }}</td>
             <td><span class="badge {% if c.status=='Chờ duyệt' %}bg-warning{% elif c.status=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.status }}</span></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="container">
+    <h2>4. ĐƠN ĐẶT MUA THẺ CỦA BẠN (ĐỢI ADMIN GỬI QUA GMAIL)</h2>
+    <table>
+        <tr><th>Loại thẻ mua</th><th>Mệnh giá</th><th>Trạng thái đơn hàng</th></tr>
+        {% for c in buy_cards %}
+        <tr>
+            <td><b style="color:blue;">{{ c.type.upper() }}</b></td><td>{{ c.amount }}đ</td>
+            <td>
+                <span class="badge {% if c.status=='Chờ xử lý' %}bg-warning{% elif c.status=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ c.status }}
+                </span>
+            </td>
         </tr>
         {% endfor %}
     </table>
@@ -162,8 +179,9 @@ BUY_CARD_HTML = BASE_CSS + """
     </div>
 </div>
 <div class="container" style="max-width: 500px;">
-    <h2>🛒 MUA THẺ SỬ DỤNG SỐ DƯ</h2>
-    <p>Bạn đang chọn mua loại thẻ: <b style="color: {{ card_info.color }}; font-size: 16px;">{{ card_info.name }}</b></p>
+    <h2>🛒 ĐẶT MUA THẺ CÀO</h2>
+    <p>Bạn đang chọn đặt mua: <b style="color: {{ card_info.color }}; font-size: 16px;">{{ card_info.name }}</b></p>
+    <p style="color: #ef6c00; font-size: 13px;">⚠️ <i>Sau khi bạn xác nhận mua, Admin sẽ kiểm tra và gửi mã thẻ trực tiếp vào liên hệ/Gmail đăng ký tài khoản của bạn.</i></p>
     
     <form method="POST" action="/process-buy/{{ card_key }}">
         <div class="form-group">
@@ -174,7 +192,7 @@ BUY_CARD_HTML = BASE_CSS + """
                 {% endfor %}
             </select>
         </div>
-        <button type="submit" style="background-color: {{ card_info.color }};">XÁC NHẬN THANH TOÁN</button>
+        <button type="submit" style="background-color: {{ card_info.color }};">XÁC NHẬN ĐẶT MUA</button>
     </form>
 </div>
 """ + DISCORD_BUTTON_TAG
@@ -209,7 +227,7 @@ ADMIN_HTML = """
                 {% if search_result %}
                     <p style="margin: 5px 0;">👤 Tên tài khoản: <b style="color:#2196F3; font-size:16px;">{{ search_result.username }}</b></p>
                     <p style="margin: 5px 0;">💰 Số dư tài khoản: <b style="color:#28a745; font-size:16px;">{{ search_result.balance }}đ</b></p>
-                    <p style="margin: 5px 0;">📞 Thông tin liên hệ: <b>{{ search_result.contact }}</b></p>
+                    <p style="margin: 5px 0;">📞 Thông tin liên hệ/Gmail: <b style="color:red;">{{ search_result.contact }}</b></p>
                 {% else %}
                     <p style="color: red; margin: 0; font-weight: bold;">❌ Không tìm thấy người dùng: "{{ search_keyword }}"</p>
                 {% endif %}
@@ -226,7 +244,7 @@ ADMIN_HTML = """
         </form>
     </div>
     
-    <h3>🚨 DANH SÁCH THẺ CHỜ DUYỆT</h3>
+    <h3>🚨 DANH SÁCH THẺ CHỜ DUYỆT (KHI KHÁCH ĐỔI THẺ VÀO WEB)</h3>
     <table>
         <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Trạng thái</th><th>Hành động</th></tr>
         {% for c in all_cards %}
@@ -234,8 +252,28 @@ ADMIN_HTML = """
             <td>{{ c.username }}</td><td>{{ c.type.upper() }}</td><td>{{ c.amount }}đ</td><td>{{ c.serial }}</td><td>{{ c.code }}</td>
             <td><span class="badge bg-warning">{{ c.status }}</span></td>
             <td>
-                <a href="/admin/approve/{{ c.id }}" style="color:green; font-weight:bold;">[ĐÚNG]</a> | 
+                <a href="/admin/approve/{{ c.id }}" style="color:green; font-weight:bold;">[ĐÚNG - CỘNG TIỀN]</a> | 
                 <a href="/admin/reject/{{ c.id }}" style="color:red; font-weight:bold;">[LỖI]</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <br><br>
+    <h3 style="color:#ef6c00;">🛒 ĐƠN KHÁCH ĐẶT MUA THẺ (BẠN HÃY GỬI GMAIL RỒI BẤM DUYỆT)</h3>
+    <table style="border: 2px solid #ef6c00;">
+        <tr style="background-color: #ffe0b2;"><th>Người mua</th><th>Liên hệ / Gmail nhận</th><th>Thẻ đặt mua</th><th>Mệnh giá</th><th>Trạng thái</th><th>Hành động xử lý bằng tay</th></tr>
+        {% for b in all_bought_cards %}
+        <tr>
+            <td><b>{{ b.username }}</b></td>
+            <td><b style="color:red;">{{ b.contact_info }}</b></td>
+            <td><span class="badge bg-danger">{{ b.type.upper() }}</span></td>
+            <td><b>{{ b.amount }}đ</b></td>
+            <td><span class="badge bg-warning">{{ b.status }}</span></td>
+            <td>
+                <a href="/admin/complete-buy/{{ b.id }}" style="background:#28a745; color:white; padding:4px 8px; text-decoration:none; font-weight:bold; border-radius:4px;">
+                    ✓ ĐÃ GỬI GMAIL XONG
+                </a>
             </td>
         </tr>
         {% endfor %}
@@ -281,7 +319,10 @@ def dashboard():
     balance = user_data.data[0]['balance'] if user_data.data else 0
     
     card_data = supabase.table("cards").select("*").eq("username", user).order("id", desc=True).execute()
-    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK, msg=request.args.get('msg'), error=request.args.get('error'))
+    deposit_cards = [c for c in card_data.data if not c['type'].startswith("Mua")]
+    buy_cards = [c for c in card_data.data if c['type'].startswith("Mua")]
+    
+    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, deposit_cards=deposit_cards, buy_cards=buy_cards, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK, msg=request.args.get('msg'), error=request.args.get('error'))
 
 @app.route('/submit-card', methods=['POST'])
 def submit_card():
@@ -310,26 +351,26 @@ def process_buy(card_key):
     user = session['username']
     buy_amount = int(request.form['buy_amount'])
     
-    user_data = supabase.table("users").select("balance").eq("username", user).execute()
+    user_data = supabase.table("users").select("balance", "contact").eq("username", user).execute()
     if not user_data.data: return redirect(url_for('dashboard'))
     
     current_balance = user_data.data[0]['balance']
+    user_contact = user_data.data[0]['contact'] or "Không có Gmail"
+    
     if current_balance < buy_amount:
-        return redirect(url_for('dashboard', error=f"Thất bại: Số dư tài khoản không đủ để mua thẻ {buy_amount}đ!"))
+        return redirect(url_for('dashboard', error=f"Thất bại: Số dư tài khoản không đủ để đặt mua thẻ {buy_amount}đ!"))
         
+    # Trừ tiền của khách ngay lập tức
     new_balance = current_balance - buy_amount
     supabase.table("users").update({"balance": new_balance}).eq("username", user).execute()
     
-    # Sử dụng biến random đã khai báo chuẩn ở đầu file để tạo mã seri/code giả lập
-    fake_serial = str(random.randint(100000000000, 999999999999))
-    fake_code = str(random.randint(1000000000000, 9999999999999))
-    
+    # Tạo đơn mua ở trạng thái Chờ xử lý (Không cấp seri/code tự động nữa)
     supabase.table("cards").insert({
         'username': user, 'type': f"Mua {card_key.upper()}",
-        'amount': buy_amount, 'serial': fake_serial, 'code': fake_code, 'status': 'Thành công'
+        'amount': buy_amount, 'serial': user_contact, 'code': 'Chờ Admin gửi bằng tay', 'status': 'Chờ xử lý'
     }).execute()
     
-    return redirect(url_for('dashboard', msg=f"Mua thành công thẻ {card_key.upper()}! Seri: {fake_serial} | Mã thẻ: {fake_code} (Đã trừ {buy_amount}đ)."))
+    return redirect(url_for('dashboard', msg=f"Đặt mua thẻ thành công! Vui lòng đợi Admin kiểm tra và gửi mã thẻ qua Gmail của bạn."))
 
 @app.route('/secret-admin-panel')
 def admin_panel():
@@ -339,45 +380,6 @@ def admin_panel():
     if search_keyword:
         user_query = supabase.table("users").select("username", "balance", "contact").eq("username", search_keyword).execute()
         if user_query.data: search_result = user_query.data[0]
-    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").execute()
-    return render_template_string(ADMIN_HTML, all_cards=all_cards.data, search_keyword=search_keyword, search_result=search_result, discord_link=DISCORD_LINK)
-
-@app.route('/admin/gift', methods=['POST'])
-def admin_gift():
-    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    target = request.form['gift_username'].strip()
-    amount = int(request.form['gift_amount'])
-    user_data = supabase.table("users").select("balance").eq("username", target).execute()
-    if user_data.data:
-        new_balance = user_data.data[0]['balance'] + amount
-        supabase.table("users").update({"balance": new_balance}).eq("username", target).execute()
-    return redirect('/secret-admin-panel')
-
-@app.route('/admin/approve/<int:card_id>')
-def admin_approve(card_id):
-    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    card = supabase.table("cards").select("*").eq("id", card_id).execute()
-    if card.data and card.data[0]['status'] == 'Ch duyệt':
-        supabase.table("cards").update({"status": "Thành công"}).eq("id", card_id).execute()
-        username = card.data[0]['username']
-        user_data = supabase.table("users").select("balance").eq("username", username).execute()
-        if user_data.data:
-            new_balance = user_data.data[0]['balance'] + card.data[0]['amount']
-            supabase.table("users").update({"balance": new_balance}).eq("username", username).execute()
-    return redirect('/secret-admin-panel')
-
-@app.route('/admin/reject/<int:card_id>')
-def admin_reject(card_id):
-    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    supabase.table("cards").update({"status": "Thẻ lỗi/Sai mã"}).eq("id", card_id).execute()
-    return redirect('/secret-admin-panel')
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('index'))
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-    
+        
+    # Thẻ nạp chờ duyệt
+    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").order(
