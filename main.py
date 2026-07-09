@@ -14,6 +14,7 @@ SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 ADMIN_USERNAME = "DINH_KHOI28215"
+DISCORD_LINK = "https://discord.gg/j6Y9vB5cn"  # Đã cập nhật link Discord chính xác của bạn
 
 CARD_TYPES = {
     "viettel": {"name": "Viettel (Ưu tiên)", "color": "#E51F27"},
@@ -26,9 +27,12 @@ DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
 
 BASE_CSS = """
 <style>
-    body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; padding-bottom: 60px; }
-    .navbar { background-color: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .navbar a { color: #d32f2f; text-decoration: none; font-weight: bold; margin-left: 15px; }
+    body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
+    .navbar { background-color: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .navbar-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #dfb76c; }
+    .brand-name { font-size: 18px; color: #2196F3; font-weight: bold; }
+    .navbar a.logout-btn { color: #d32f2f; text-decoration: none; font-weight: bold; margin-left: 15px; }
     .container { max-width: 700px; margin: 25px auto; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .auth-box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; background: #fafafa; margin-bottom: 20px; }
     h2 { color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 18px; margin-bottom: 20px; }
@@ -48,11 +52,32 @@ BASE_CSS = """
     .bg-danger { background-color: #dc3545; color: #fff; }
     .btn-close { color: #dc3545; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 10px; cursor: pointer; }
     .btn-close:hover { text-decoration: underline; }
+    
+    /* 🎧 NÚT CHUYỂN HƯỚNG SANG DISCORD GÓC DƯỚI MÀN HÌNH */
+    .discord-support-btn { position: fixed; bottom: 20px; right: 20px; background-color: #5865F2; color: white; text-decoration: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(88,101,242,0.4); display: flex; align-items: center; gap: 8px; z-index: 9999; transition: 0.2s; }
+    .discord-support-btn:hover { background-color: #4752c4; transform: scale(1.05); color: white; }
 </style>
 """
 
+LOGO_HTML_TAG = """
+<div class="navbar-brand">
+    <img src="https://img.freepik.com/premium-vector/d-letter-logo-luxury-gold-color_755034-846.jpg" class="brand-logo" alt="Logo">
+    <span class="brand-name">doithecaouytinok.com</span>
+</div>
+"""
+
+# ĐỔI THÀNH THẺ <a> ĐỂ BẤM VÀO MỞ THẲNG LINK SANG DISCORD
+DISCORD_BUTTON_TAG = """
+<a class="discord-support-btn" href="{{ discord_link }}" target="_blank">
+    <span>💬</span> Hỗ Trợ Discord
+</a>
+"""
+
 LOGIN_HTML = BASE_CSS + """
-<div class="container" style="max-width: 500px; margin-top: 40px;">
+<div class="navbar">
+    """ + LOGO_HTML_TAG + """
+</div>
+<div class="container" style="max-width: 500px; margin-top: 20px;">
     <h2 style="text-align: center; border: none; margin-bottom: 30px;">HỆ THỐNG ĐỔI THẺ CAO ĐIỆN TỬ</h2>
     {% if msg %}<div style="color: red; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ msg }}</div>{% endif %}
     <div class="auth-box">
@@ -73,14 +98,14 @@ LOGIN_HTML = BASE_CSS + """
         </form>
     </div>
 </div>
-"""
+""" + DISCORD_BUTTON_TAG
 
 DASHBOARD_HTML = BASE_CSS + """
 <div class="navbar">
-    <b style="font-size: 18px; color: #2196F3;">doithecaouytinok.com</b>
+    """ + LOGO_HTML_TAG + """
     <div>
         <span>Xin chào: <b>{{ username }}</b> | Số dư: <b style="color:#28a745;">{{ balance }}đ</b></span>
-        <a href="/logout">Đăng xuất</a>
+        <a href="/logout" class="logout-btn">Đăng xuất</a>
     </div>
 </div>
 <div class="container">
@@ -124,12 +149,19 @@ DASHBOARD_HTML = BASE_CSS + """
         {% endfor %}
     </table>
 </div>
-"""
+""" + DISCORD_BUTTON_TAG
 
 ADMIN_HTML = """
 <head><meta name="robots" content="noindex, nofollow"></head>
 """ + BASE_CSS + """
-<div class="container" style="max-width: 950px;">
+<div class="navbar">
+    """ + LOGO_HTML_TAG + """
+    <div>
+        <span style="font-weight:bold; color:red;">[QUẢN TRỊ VIÊN]</span>
+        <a href="/logout" class="logout-btn">Đăng xuất</a>
+    </div>
+</div>
+<div class="container" style="max-width: 950px; margin-top:20px;">
     <h2>🔒 TRANG QUẢN TRỊ ADMIN</h2>
     
     <div style="background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ccc;">
@@ -182,12 +214,12 @@ ADMIN_HTML = """
         {% endfor %}
     </table>
 </div>
-"""
+""" + DISCORD_BUTTON_TAG
 
 @app.route('/')
 def index():
     if 'username' in session: return redirect(url_for('dashboard'))
-    return render_template_string(LOGIN_HTML, msg=request.args.get('msg', ''))
+    return render_template_string(LOGIN_HTML, msg=request.args.get('msg', ''), discord_link=DISCORD_LINK)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -224,7 +256,7 @@ def dashboard():
     balance = user_data.data[0]['balance'] if user_data.data else 0
     
     card_data = supabase.table("cards").select("*").eq("username", user).execute()
-    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS)
+    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK)
 
 @app.route('/submit-card', methods=['POST'])
 def submit_card():
@@ -248,7 +280,7 @@ def admin_panel():
             search_result = user_query.data[0]
 
     all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").execute()
-    return render_template_string(ADMIN_HTML, all_cards=all_cards.data, search_keyword=search_keyword, search_result=search_result)
+    return render_template_string(ADMIN_HTML, all_cards=all_cards.data, search_keyword=search_keyword, search_result=search_result, discord_link=DISCORD_LINK)
 
 @app.route('/admin/gift', methods=['POST'])
 def admin_gift():
@@ -289,4 +321,4 @@ def logout():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-    
+        
