@@ -1,64 +1,19 @@
 from flask import Flask, render_template_string, request, redirect, url_for, session
 import os
-import json
+from supabase import create_client, Client
 
 app = Flask(__name__)
 app.secret_key = "doitheuytin_sieucap"
 
-# --- ĐƯỜNG DẪN FILE LƯU TRỮ TRÊN SERVER ---
-USERS_FILE = "database_users.txt"
-CARDS_FILE = "database_cards.txt"
-ORDERS_FILE = "database_orders.txt"
+# =================================================================
+# 🔗 THÔNG TIN SUPABASE CỦA BẠN ĐÃ ĐƯỢC TỰ ĐỘNG CÀI ĐẶT
+# =================================================================
+SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
+SUPABASE_KEY = "sb_publishable_Mr2bWaJ-2j0Ffs5V1J70kw_OrroVSxv"
 
-# --- 🔐 TÀI KHOẢN ADMIN ĐƯỢC ỦY QUYỀN TRUY CẬP ---
-ADMIN_USERNAME = "DINH_KHOI28215" 
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-PRIORITY_CARD_TYPES = ["viettel", "garena", "zing"]
-
-# --- HÀM TỰ ĐỘNG ĐỌC VÀ GHI FILE ---
-def load_data():
-    global USERS, CARDS_SUBMITTED, BUY_ORDERS
-    if os.path.exists(USERS_FILE):
-        try:
-            with open(USERS_FILE, "r", encoding="utf-8") as f: USERS = json.load(f)
-        except: USERS = {}
-    else: USERS = {}
-
-    if os.path.exists(CARDS_FILE):
-        try:
-            with open(CARDS_FILE, "r", encoding="utf-8") as f: CARDS_SUBMITTED = json.load(f)
-        except: CARDS_SUBMITTED = []
-    else: CARDS_SUBMITTED = []
-
-    if os.path.exists(ORDERS_FILE):
-        try:
-            with open(ORDERS_FILE, "r", encoding="utf-8") as f: BUY_ORDERS = json.load(f)
-        except: BUY_ORDERS = []
-    else: BUY_ORDERS = []
-
-def save_users():
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(USERS, f, ensure_ascii=False)
-        f.flush()
-        os.fsync(f.fileno())
-
-def save_cards():
-    global CARDS_SUBMITTED
-    if len(CARDS_SUBMITTED) > 200:
-        priority_cards = [c for c in CARDS_SUBMITTED if c.get('type') in PRIORITY_CARD_TYPES]
-        normal_cards = [c for c in CARDS_SUBMITTED if c.get('type') not in PRIORITY_CARD_TYPES]
-        max_normal_allowed = 200 - len(priority_cards)
-        if max_normal_allowed > 0: normal_cards = normal_cards[-max_normal_allowed:]
-        else: normal_cards = []
-        CARDS_SUBMITTED = priority_cards + normal_cards
-        
-    with open(CARDS_FILE, "w", encoding="utf-8") as f:
-        json.dump(CARDS_SUBMITTED, f, ensure_ascii=False)
-        f.flush()
-        os.fsync(f.fileno())
-
-# Khởi động dữ liệu
-load_data()
+ADMIN_USERNAME = "DINH_KHOI28215"
 
 CARD_TYPES = {
     "viettel": {"name": "Viettel (Ưu tiên)", "color": "#E51F27"},
@@ -74,17 +29,16 @@ BASE_CSS = """
     body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; padding-bottom: 60px; }
     .navbar { background-color: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .navbar a { color: #d32f2f; text-decoration: none; font-weight: bold; margin-left: 15px; }
-    .logo-container { display: flex; align-items: center; justify-content: center; text-decoration: none; gap: 10px; margin: 20px 0; }
-    .logo-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .container { max-width: 700px; margin: 25px auto; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .auth-box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; background: #fafafa; margin-bottom: 20px; }
     h2 { color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 18px; margin-bottom: 20px; }
+    h3 { margin-top: 0; color: #333; font-size: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
     input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-bottom: 5px; }
     button { background-color: #2196F3; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
     .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
     .card-item { text-align: center; color: white; font-weight: bold; text-decoration: none; padding: 15px; border-radius: 8px; transition: 0.2s; }
-    .card-item:hover { opacity: 0.9; transform: translateY(-2px); }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; font-size: 13px; }
     th { background-color: #f8f9fa; }
@@ -92,21 +46,33 @@ BASE_CSS = """
     .bg-warning { background-color: #ffc107; color: #fff; }
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
-    .discord-fixed-btn { position: fixed; bottom: 25px; right: 25px; background-color: #111; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; }
 </style>
-<a href="https://discord.gg/x4PqVMxhH" class="discord-fixed-btn" target="_blank">💬</a>
 """
 
 LOGIN_HTML = BASE_CSS + """
-<div class="container" style="max-width: 450px; margin-top: 40px;">
-    <div class="logo-container"><img src="https://img.freepik.com/premium-vector/d-letter-logo-luxury-gold-color_755034-846.jpg" class="logo-img"></div>
-    <h2 style="text-align: center; border: none;">ĐĂNG NHẬP / ĐĂNG KÝ TỰ ĐỘNG</h2>
-    <form method="POST" action="/login">
-        <div class="form-group"><label>Tên đăng nhập:</label><input type="text" name="username" required></div>
-        <div class="form-group"><label>Mật khẩu:</label><input type="password" name="password" required></div>
-        <div class="form-group"><label>Số điện thoại / Email:</label><input type="text" name="contact" placeholder="Nhập SĐT hoặc Email"></div>
-        <button type="submit">VÀO TRANG ĐỔI THẺ</button>
-    </form>
+<div class="container" style="max-width: 500px; margin-top: 40px;">
+    <h2 style="text-align: center; border: none; margin-bottom: 30px;">HỆ THỐNG ĐỔI THẺ CAO ĐIỆN TỬ</h2>
+    
+    {% if msg %}<div style="color: red; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ msg }}</div>{% endif %}
+
+    <div class="auth-box">
+        <h3>🔑 ĐĂNG NHẬP TÀI KHOẢN</h3>
+        <form method="POST" action="/login">
+            <div class="form-group"><label>Tên đăng nhập:</label><input type="text" name="username" required></div>
+            <div class="form-group"><label>Mật khẩu:</label><input type="password" name="password" required></div>
+            <button type="submit" style="background-color: #2196F3;">ĐĂNG NHẬP</button>
+        </form>
+    </div>
+
+    <div class="auth-box" style="background-color: #f1f8e9;">
+        <h3 style="color: #2e7d32; border-bottom-color: #c8e6c9;">📝 ĐĂNG KÝ TÀI KHOẢN MỚI</h3>
+        <form method="POST" action="/register">
+            <div class="form-group"><label>Tên đăng nhập mới:</label><input type="text" name="username" required></div>
+            <div class="form-group"><label>Mật khẩu:</label><input type="password" name="password" required></div>
+            <div class="form-group"><label>Số điện thoại / Email liên hệ:</label><input type="text" name="contact" placeholder="Nhập SĐT hoặc Email để bảo mật thẻ" required></div>
+            <button type="submit" style="background-color: #4caf50;">TẠO TÀI KHOẢN MỚI</button>
+        </form>
+    </div>
 </div>
 """
 
@@ -161,147 +127,123 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """
 
-# Thẻ meta cấm Google thu thập thông tin trang này
 ADMIN_HTML = """
-<head>
-    <meta name="robots" content="noindex, nofollow">
-</head>
+<head><meta name="robots" content="noindex, nofollow"></head>
 """ + BASE_CSS + """
 <div class="container" style="max-width: 950px;">
-    <h2>🔒 TRANG QUẢN TRỊ BẢO MẬT (ĐÃ ẨN KHỎI GOOGLE)</h2>
-    
-    <div style="background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h3>🔍 QUAN SÁT TÀI KHOẢN KHI RESET</h3>
-        <form method="GET" action="/secret-admin-panel">
-            <input type="text" name="search_user" placeholder="Nhập tên tài khoản..." value="{{ search_keyword }}">
-            <button type="submit" style="background: #444; width: auto; padding: 10px 20px;">Tìm kiếm</button>
-        </form>
-        {% if search_result %}
-        <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 6px; border: 1px dashed #2196F3;">
-            <p>📌 Tài khoản: <b>{{ search_result.username }}</b> | Số dư: <b style="color:red;">{{ search_result.balance }}đ</b></p>
-        </div>
-        {% endif %}
-    </div>
-
+    <h2>🔒 TRANG QUẢN TRỊ SUPABASE (ĐÃ ẨN)</h2>
     <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
-        <h3>🎁 GIFT TIỀN CỨU TRỢ NGƯỜI CHƠI</h3>
+        <h3>🎁 GIFT TIỀN</h3>
         <form method="POST" action="/admin/gift">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" name="gift_username" placeholder="Tên tài khoản..." required>
-                <input type="number" name="gift_amount" placeholder="Số tiền..." required>
-            </div>
-            <button type="submit" style="background: #ff9800; margin-top: 5px;">XÁC NHẬN GIFT TIỀN 🚀</button>
+            <input type="text" name="gift_username" placeholder="Tên tài khoản..." required>
+            <input type="number" name="gift_amount" placeholder="Số tiền..." required>
+            <button type="submit" style="background: #ff9800; margin-top: 5px;">XÁC NHẬN GIFT</button>
         </form>
     </div>
-
-    <h3>🚨 CHI TIẾT THẺ KHÁCH ĐÃ GỬI</h3>
+    <h3>🚨 THẺ CHỜ DUYỆT</h3>
     <table>
-        <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Số Seri</th><th>Mã Thẻ (Code)</th><th>Trạng thái</th><th>Hành động</th></tr>
+        <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Trạng thái</th><th>Hành động</th></tr>
         {% for c in all_cards %}
         <tr>
-            <td><b>{{ c.username }}</b></td>
-            <td>{% if c.type in ["viettel", "garena", "zing"] %}<span style="color: #ff9800; font-weight: bold;">🔥 {{ c.type.upper() }}</span>{% else %}{{ c.type.upper() }}{% endif %}</td>
-            <td>{{ c.amount }}đ</td>
-            <td style="color: #0054A5; font-weight: bold;">{{ c.serial }}</td>
-            <td style="color: #E51F27; font-weight: bold;">{{ c.code }}</td>
-            <td><span class="badge {% if c.status=='Chờ duyệt' %}bg-warning{% elif c.status=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.status }}</span></td>
+            <td>{{ c.username }}</td><td>{{ c.type.upper() }}</td><td>{{ c.amount }}đ</td><td>{{ c.serial }}</td><td>{{ c.code }}</td>
+            <td><span class="badge bg-warning">{{ c.status }}</span></td>
             <td>
-                {% if c.status == 'Chờ duyệt' %}
                 <a href="/admin/approve/{{ c.id }}" style="color:green; font-weight:bold;">[ĐÚNG]</a> | 
                 <a href="/admin/reject/{{ c.id }}" style="color:red; font-weight:bold;">[LỖI]</a>
-                {% else %}-{% endif %}
             </td>
         </tr>
         {% endfor %}
     </table>
-    <br><a href="/dashboard">Quay lại trang Dashboard khách hàng</a>
 </div>
 """
 
 @app.route('/')
 def index():
-    load_data()
     if 'username' in session: return redirect(url_for('dashboard'))
-    return render_template_string(LOGIN_HTML)
+    return render_template_string(LOGIN_HTML, msg=request.args.get('msg', ''))
 
 @app.route('/login', methods=['POST'])
 def login():
-    load_data()
     username = request.form['username'].strip()
     password = request.form['password']
-    contact = request.form.get('contact', 'Không có')
-    if username not in USERS:
-        USERS[username] = {'password': password, 'contact': contact, 'balance': 0}
-        save_users()
+    
+    res = supabase.table("users").select("*").eq("username", username).eq("password", password).execute()
+    if res.data:
+        session['username'] = username
+        return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('index', msg="Sai tài khoản hoặc mật khẩu!"))
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.form['username'].strip()
+    password = request.form['password']
+    contact = request.form.get('contact', 'Không có').strip()
+    
+    check_exist = supabase.table("users").select("username").eq("username", username).execute()
+    if check_exist.data:
+        return redirect(url_for('index', msg="Tên đăng nhập này đã tồn tại!"))
+    
+    supabase.table("users").insert({"username": username, "password": password, "contact": contact, "balance": 0}).execute()
     session['username'] = username
     return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
 def dashboard():
-    load_data()
     if 'username' not in session: return redirect(url_for('index'))
     user = session['username']
-    my_cards = [c for c in CARDS_SUBMITTED if c['username'] == user]
-    return render_template_string(DASHBOARD_HTML, username=user, balance=USERS.get(user, {'balance':0})['balance'], my_cards=my_cards, card_types=CARD_TYPES, denominations=DENOMINATIONS)
+    
+    user_data = supabase.table("users").select("balance").eq("username", user).execute()
+    balance = user_data.data[0]['balance'] if user_data.data else 0
+    
+    card_data = supabase.table("cards").select("*").eq("username", user).execute()
+    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS)
 
 @app.route('/submit-card', methods=['POST'])
 def submit_card():
-    load_data()
     if 'username' not in session: return redirect(url_for('index'))
-    CARDS_SUBMITTED.append({
-        'id': len(CARDS_SUBMITTED) + 1, 'username': session['username'],
-        'type': request.form['card_type'], 'amount': int(request.form['amount']),
-        'serial': request.form['serial'].strip(), 'code': request.form['code'].strip(), 'status': 'Chờ duyệt'
-    })
-    save_cards()
+    supabase.table("cards").insert({
+        'username': session['username'], 'type': request.form['card_type'],
+        'amount': int(request.form['amount']), 'serial': request.form['serial'].strip(),
+        'code': request.form['code'].strip(), 'status': 'Chờ duyệt'
+    }).execute()
     return redirect(url_for('dashboard'))
 
-# --- ĐƯỜNG DẪN ẢN TRANG ADMIN & CHECK ĐÚNG DINH_KHOI28215 ---
 @app.route('/secret-admin-panel')
 def admin_panel():
-    load_data()
-    if 'username' not in session or session['username'] != ADMIN_USERNAME:
-        return "<h3>❌ CẢNH BÁO: Bạn không có quyền truy cập trang quản trị bí mật này!</h3>", 403
-
-    search_keyword = request.args.get('search_user', '').strip()
-    search_result = None
-    if search_keyword in USERS:
-        search_result = USERS[search_keyword]
-        search_result['username'] = search_keyword
-    
-    return render_template_string(ADMIN_HTML, all_cards=CARDS_SUBMITTED, search_keyword=search_keyword, search_result=search_result)
+    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
+    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").execute()
+    return render_template_string(ADMIN_HTML, all_cards=all_cards.data)
 
 @app.route('/admin/gift', methods=['POST'])
 def admin_gift():
-    load_data()
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    target_user = request.form['gift_username'].strip()
-    gift_amount = int(request.form['gift_amount'])
-    if target_user in USERS: USERS[target_user]['balance'] += gift_amount
-    else: USERS[target_user] = {'password': '123', 'contact': 'Admin Gift', 'balance': gift_amount}
-    save_users()
-    return "<script>alert('Đã xử lý Gift xong!'); window.location='/secret-admin-panel';</script>"
+    target = request.form['gift_username'].strip()
+    amount = int(request.form['gift_amount'])
+    
+    user_data = supabase.table("users").select("balance").eq("username", target).execute()
+    if user_data.data:
+        new_balance = user_data.data[0]['balance'] + amount
+        supabase.table("users").update({"balance": new_balance}).eq("username", target).execute()
+    return "<script>alert('Gift tiền thành công!'); window.location='/secret-admin-panel';</script>"
 
 @app.route('/admin/approve/<int:card_id>')
 def admin_approve(card_id):
-    load_data()
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    card = next((c for c in CARDS_SUBMITTED if c['id'] == card_id), None)
-    if card and card['status'] == 'Chờ duyệt':
-        card['status'] = 'Thành công'
-        if card['username'] in USERS: USERS[card['username']]['balance'] += card['amount']
-        save_users()
-        save_cards()
+    card = supabase.table("cards").select("*").eq("id", card_id).execute()
+    if card.data and card.data[0]['status'] == 'Chờ duyệt':
+        supabase.table("cards").update({"status": "Thành công"}).eq("id", card_id).execute()
+        username = card.data[0]['username']
+        user_data = supabase.table("users").select("balance").eq("username", username).execute()
+        if user_data.data:
+            new_balance = user_data.data[0]['balance'] + card.data[0]['amount']
+            supabase.table("users").update({"balance": new_balance}).eq("username", username).execute()
     return redirect('/secret-admin-panel')
 
 @app.route('/admin/reject/<int:card_id>')
 def admin_reject(card_id):
-    load_data()
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    card = next((c for c in CARDS_SUBMITTED if c['id'] == card_id), None)
-    if card and card['status'] == 'Chờ duyệt':
-        card['status'] = 'Thẻ lỗi/Sai mã'
-        save_cards()
+    supabase.table("cards").update({"status": "Thẻ lỗi/Sai mã"}).eq("id", card_id).execute()
     return redirect('/secret-admin-panel')
 
 @app.route('/logout')
@@ -312,3 +254,4 @@ def logout():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+    
