@@ -1,5 +1,6 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session
 import os
+import random  # Đã đưa thư viện lên đầu file để tránh lỗi biên dịch Deploy status 1
+from flask import Flask, render_template_string, request, redirect, url_for, session
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -106,8 +107,8 @@ DASHBOARD_HTML = BASE_CSS + """
     </div>
 </div>
 
-{% if msg %}<div class="container" style="color: blue; font-weight: bold; text-align: center;">{{ msg }}</div>{% endif %}
-{% if error %}<div class="container" style="color: red; font-weight: bold; text-align: center;">{{ error }}</div>{% endif %}
+{% if msg %}<div class="container" style="color: blue; font-weight: bold; text-align: center; margin-bottom: 10px; border: 1px solid blue; padding: 10px;">{{ msg }}</div>{% endif %}
+{% if error %}<div class="container" style="color: red; font-weight: bold; text-align: center; margin-bottom: 10px; border: 1px solid red; padding: 10px;">{{ error }}</div>{% endif %}
 
 <div class="container">
     <h2>1. GỬI THẺ CÀO (ĐỔI THÀNH TIỀN)</h2>
@@ -139,7 +140,7 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 
 <div class="container">
-    <h2>3. LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
+    <h2>3. LỊCH SỬ GỬI/MUA THẺ CỦA BẠN</h2>
     <table>
         <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Trạng thái</th></tr>
         {% for c in my_cards %}
@@ -152,7 +153,6 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """ + DISCORD_BUTTON_TAG
 
-# 📝 THÊM GIAO DIỆN CHỌN MỆNH GIÁ KHI MUA THẺ
 BUY_CARD_HTML = BASE_CSS + """
 <div class="navbar">
     """ + LOGO_HTML_TAG + """
@@ -162,7 +162,7 @@ BUY_CARD_HTML = BASE_CSS + """
     </div>
 </div>
 <div class="container" style="max-width: 500px;">
-    <h2>🛒 MUA THẺ SỬ DỤNG SỐ DƯ (HỆ THỐNG TỰ ĐỘNG)</h2>
+    <h2>🛒 MUA THẺ SỬ DỤNG SỐ DƯ</h2>
     <p>Bạn đang chọn mua loại thẻ: <b style="color: {{ card_info.color }}; font-size: 16px;">{{ card_info.name }}</b></p>
     
     <form method="POST" action="/process-buy/{{ card_key }}">
@@ -170,11 +170,11 @@ BUY_CARD_HTML = BASE_CSS + """
             <label>Chọn mệnh giá cần mua:</label>
             <select name="buy_amount">
                 {% for d in denominations %}
-                <option value="{{ d }}">{{ d }}đ (Giá gốc)</option>
+                <option value="{{ d }}">{{ d }}đ</option>
                 {% endfor %}
             </select>
         </div>
-        <button type="submit" style="background-color: {{ card_info.color }};">XÁC NHẬN THANH TOÁN MUA THẺ</button>
+        <button type="submit" style="background-color: {{ card_info.color }};">XÁC NHẬN THANH TOÁN</button>
     </form>
 </div>
 """ + DISCORD_BUTTON_TAG
@@ -280,7 +280,7 @@ def dashboard():
     user_data = supabase.table("users").select("balance").eq("username", user).execute()
     balance = user_data.data[0]['balance'] if user_data.data else 0
     
-    card_data = supabase.table("cards").select("*").eq("username", user).execute()
+    card_data = supabase.table("cards").select("*").eq("username", user).order("id", desc=True).execute()
     return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK, msg=request.args.get('msg'), error=request.args.get('error'))
 
 @app.route('/submit-card', methods=['POST'])
@@ -293,7 +293,6 @@ def submit_card():
     }).execute()
     return redirect(url_for('dashboard', msg="Gửi thẻ thành công! Vui lòng chờ Admin duyệt."))
 
-# ⚙️ LOGIC TRANG CHỌN MUA THẺ
 @app.route('/buy/<string:card_key>')
 def buy_card_page(card_key):
     if 'username' not in session: return redirect(url_for('index'))
@@ -305,7 +304,6 @@ def buy_card_page(card_key):
     
     return render_template_string(BUY_CARD_HTML, username=user, balance=balance, card_key=card_key, card_info=CARD_TYPES[card_key], denominations=DENOMINATIONS, discord_link=DISCORD_LINK)
 
-# ⚙️ LOGIC XỬ LÝ TRỪ TIỀN VÀ TRẢ MÃ THẺ TỰ ĐỘNG
 @app.route('/process-buy/<string:card_key>', methods=['POST'])
 def process_buy(card_key):
     if 'username' not in session: return redirect(url_for('index'))
@@ -319,22 +317,19 @@ def process_buy(card_key):
     if current_balance < buy_amount:
         return redirect(url_for('dashboard', error=f"Thất bại: Số dư tài khoản không đủ để mua thẻ {buy_amount}đ!"))
         
-    # Tính toán số dư mới sau khi trừ tiền
     new_balance = current_balance - buy_amount
     supabase.table("users").update({"balance": new_balance}).eq("username", user).execute()
     
-    # Tạo ngẫu nhiên một mã pin và seri giả lập để trả cho người mua test hệ thống
-    import random
+    # Sử dụng biến random đã khai báo chuẩn ở đầu file để tạo mã seri/code giả lập
     fake_serial = str(random.randint(100000000000, 999999999999))
     fake_code = str(random.randint(1000000000000, 9999999999999))
     
-    # Thêm bản ghi mua thẻ vào bảng lịch sử duyệt (Đặt trạng thái "Thành công" luôn vì khách dùng số dư mua)
     supabase.table("cards").insert({
         'username': user, 'type': f"Mua {card_key.upper()}",
         'amount': buy_amount, 'serial': fake_serial, 'code': fake_code, 'status': 'Thành công'
     }).execute()
     
-    return redirect(url_for('dashboard', msg=f"Mua thẻ thành công! Seri: {fake_serial} | Mã thẻ: {fake_code} (Đã trừ {buy_amount}đ vào tài khoản)."))
+    return redirect(url_for('dashboard', msg=f"Mua thành công thẻ {card_key.upper()}! Seri: {fake_serial} | Mã thẻ: {fake_code} (Đã trừ {buy_amount}đ)."))
 
 @app.route('/secret-admin-panel')
 def admin_panel():
@@ -362,7 +357,7 @@ def admin_gift():
 def admin_approve(card_id):
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     card = supabase.table("cards").select("*").eq("id", card_id).execute()
-    if card.data and card.data[0]['status'] == 'Chờ duyệt':
+    if card.data and card.data[0]['status'] == 'Ch duyệt':
         supabase.table("cards").update({"status": "Thành công"}).eq("id", card_id).execute()
         username = card.data[0]['username']
         user_data = supabase.table("users").select("balance").eq("username", username).execute()
@@ -384,4 +379,5 @@ def logout():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host
+    app.run(host="0.0.0.0", port=port)
+    
