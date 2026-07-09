@@ -10,70 +10,54 @@ USERS_FILE = "database_users.txt"
 CARDS_FILE = "database_cards.txt"
 ORDERS_FILE = "database_orders.txt"
 
-# Các loại thẻ lớn, nổi tiếng toàn quốc được ƯU TIÊN GIỮ LẠI KHÔNG XÓA KHI ĐẦY BỘ NHỚ
+# --- 🔐 TÀI KHOẢN ADMIN ĐƯỢC ỦY QUYỀN TRUY CẬP ---
+ADMIN_USERNAME = "DINH_KHOI28215" 
+
 PRIORITY_CARD_TYPES = ["viettel", "garena", "zing"]
 
-# --- HÀM TỰ ĐỘNG ĐỌC VÀ GHI FILE (CÓ THUẬT TOÁN LỌC ƯU TIÊN) ---
+# --- HÀM TỰ ĐỘNG ĐỌC VÀ GHI FILE ---
 def load_data():
     global USERS, CARDS_SUBMITTED, BUY_ORDERS
-    
-    # Đọc dữ liệu tài khoản
     if os.path.exists(USERS_FILE):
         try:
-            with open(USERS_FILE, "r", encoding="utf-8") as f:
-                USERS = json.load(f)
+            with open(USERS_FILE, "r", encoding="utf-8") as f: USERS = json.load(f)
         except: USERS = {}
     else: USERS = {}
 
-    # Đọc dữ liệu thẻ cào đã gửi
     if os.path.exists(CARDS_FILE):
         try:
-            with open(CARDS_FILE, "r", encoding="utf-8") as f:
-                CARDS_SUBMITTED = json.load(f)
+            with open(CARDS_FILE, "r", encoding="utf-8") as f: CARDS_SUBMITTED = json.load(f)
         except: CARDS_SUBMITTED = []
     else: CARDS_SUBMITTED = []
 
-    # Đọc dữ liệu đơn mua thẻ
     if os.path.exists(ORDERS_FILE):
         try:
-            with open(ORDERS_FILE, "r", encoding="utf-8") as f:
-                BUY_ORDERS = json.load(f)
+            with open(ORDERS_FILE, "r", encoding="utf-8") as f: BUY_ORDERS = json.load(f)
         except: BUY_ORDERS = []
     else: BUY_ORDERS = []
 
 def save_users():
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(USERS, f, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
 
 def save_cards():
     global CARDS_SUBMITTED
-    # THUẬT TOÁN LỌC ƯU TIÊN CHỐNG TRÀN BỘ NHỚ
     if len(CARDS_SUBMITTED) > 200:
-        # Tách riêng thẻ ưu tiên (Viettel, Garena, Zing) và thẻ thường
         priority_cards = [c for c in CARDS_SUBMITTED if c.get('type') in PRIORITY_CARD_TYPES]
         normal_cards = [c for c in CARDS_SUBMITTED if c.get('type') not in PRIORITY_CARD_TYPES]
-        
-        # Cắt bớt thẻ thường cũ hơn để dọn chỗ, chỉ giữ lại những thẻ thường mới nhất
         max_normal_allowed = 200 - len(priority_cards)
-        if max_normal_allowed > 0:
-            normal_cards = normal_cards[-max_normal_allowed:]
-        else:
-            normal_cards = [] # Nếu thẻ ưu tiên quá nhiều, tạm thời xóa hết thẻ thường cũ
-            
-        # Gộp lại danh sách (Thẻ lớn toàn quốc luôn được bảo vệ an toàn)
+        if max_normal_allowed > 0: normal_cards = normal_cards[-max_normal_allowed:]
+        else: normal_cards = []
         CARDS_SUBMITTED = priority_cards + normal_cards
         
     with open(CARDS_FILE, "w", encoding="utf-8") as f:
         json.dump(CARDS_SUBMITTED, f, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
 
-def save_orders():
-    global BUY_ORDERS
-    if len(BUY_ORDERS) > 100:
-        BUY_ORDERS = BUY_ORDERS[-100:]
-    with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(BUY_ORDERS, f, ensure_ascii=False)
-
-# Khởi tạo dữ liệu hệ thống
+# Khởi động dữ liệu
 load_data()
 
 CARD_TYPES = {
@@ -81,13 +65,10 @@ CARD_TYPES = {
     "garena": {"name": "Garena (Ưu tiên)", "color": "#FF0000"},
     "zing": {"name": "Zing Card (Ưu tiên)", "color": "#81C784"},
     "vinaphone": {"name": "Vinaphone", "color": "#00A4E4"},
-    "mobifone": {"name": "Mobifone", "color": "#0054A5"},
-    "gate": {"name": "Gate", "color": "#FF9800"},
-    "vcoin": {"name": "Vcoin", "color": "#0288D1"}
+    "mobifone": {"name": "Mobifone", "color": "#0054A5"}
 }
 DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
 
-# --- CSS STYLE (NÚT DISCORD TRÒN ĐEN CỐ ĐỊNH) ---
 BASE_CSS = """
 <style>
     body { background-color: #f4f6f9; color: #333; font-family: Arial, sans-serif; margin: 0; padding: 0; padding-bottom: 60px; }
@@ -101,8 +82,6 @@ BASE_CSS = """
     label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
     input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; margin-bottom: 5px; }
     button { background-color: #2196F3; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-    .card-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 10px; text-align: center; cursor: pointer; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); text-decoration: none; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; font-size: 13px; }
     th { background-color: #f8f9fa; }
@@ -110,10 +89,9 @@ BASE_CSS = """
     .bg-warning { background-color: #ffc107; color: #fff; }
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
-    .discord-fixed-btn { position: fixed; bottom: 25px; right: 25px; background-color: #111; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; transition: 0.3s; }
-    .discord-fixed-btn:hover { transform: scale(1.1); }
+    .discord-fixed-btn { position: fixed; bottom: 25px; right: 25px; background-color: #111; color: #fff; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; }
 </style>
-<a href="https://discord.gg/x4PqVMxhH" class="discord-fixed-btn" target="_blank" title="Hỗ trợ Discord">💬</a>
+<a href="https://discord.gg/x4PqVMxhH" class="discord-fixed-btn" target="_blank">💬</a>
 """
 
 LOGIN_HTML = BASE_CSS + """
@@ -154,16 +132,7 @@ DASHBOARD_HTML = BASE_CSS + """
     </form>
 </div>
 <div class="container">
-    <h2>2. CHỌN LOẠI THẺ CẦN MUA</h2>
-    <div class="card-grid">
-        {% for key, val in card_types.items() %}
-        <a href="/buy/{{ key }}" class="card-item" style="background-color: {{ val.color }};"><div style="font-size: 18px;">💳</div>{{ val.name }}</a>
-        {% endfor %}
-    </div>
-</div>
-<div class="container">
-    <h2>3. LỊCH SỬ GỬI THẺ & MUA THẺ</h2>
-    <h3>Thẻ bạn đã gửi:</h3>
+    <h2>2. LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
     <table>
         <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Trạng thái</th></tr>
         {% for c in my_cards %}
@@ -176,68 +145,46 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """
 
-BUY_DETAIL_HTML = BASE_CSS + """
-<div class="navbar"><b style="font-size:18px;">doithecaouytinok.com</b></div>
-<div class="container">
-    <h2>MUA THẺ: {{ card_info.name.upper() }}</h2>
-    <form method="POST" action="/process-buy">
-        <input type="hidden" name="card_type" value="{{ card_type }}">
-        <div class="form-group">
-            <label>Chọn mệnh giá cần mua:</label>
-            <select name="amount">{% for d in denominations %}<option value="{{ d }}">{{ d }}đ</option>{% endfor %}</select>
-        </div>
-        <button type="submit">XÁC NHẬN THANH TOÁN MUA THẺ</button>
-    </form>
-    <br><a href="/dashboard"> Quay lại trang chủ</a>
-</div>
-"""
-
-ADMIN_HTML = BASE_CSS + """
+# Thẻ ẩn khỏi Google tìm kiếm
+ADMIN_HTML = """
+<head>
+    <meta name="robots" content="noindex, nofollow">
+</head>
+""" + BASE_CSS + """
 <div class="container" style="max-width: 950px;">
-    <h2>TRANG QUẢN TRỊ BẢO MẬT (ADMIN)</h2>
+    <h2>🔒 TRANG QUẢN TRỊ BẢO MẬT (ĐÃ ẨN KHỎI GOOGLE)</h2>
     
     <div style="background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h3>🔍 QUAN SÁT TÀI KHOẢN (LƯU TRỮ AN TOÀN)</h3>
+        <h3>🔍 QUAN SÁT TÀI KHOẢN KHI RESET</h3>
         <form method="GET" action="/secret-admin-panel">
             <input type="text" name="search_user" placeholder="Nhập tên tài khoản..." value="{{ search_keyword }}">
             <button type="submit" style="background: #444; width: auto; padding: 10px 20px;">Tìm kiếm</button>
-            {% if search_keyword %}<a href="/secret-admin-panel" style="margin-left:10px;">Xóa bộ lọc</a>{% endif %}
         </form>
         {% if search_result %}
         <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 6px; border: 1px dashed #2196F3;">
-            <p>📌 Tài khoản: <b>{{ search_result.username }}</b></p>
-            <p>📞 Liên hệ: {{ search_result.contact }}</p>
-            <p>💰 Số dư hiện tại: <b style="color:red; font-size:16px;">{{ search_result.balance }}đ</b></p>
+            <p>📌 Tài khoản: <b>{{ search_result.username }}</b> | Số dư: <b style="color:red;">{{ search_result.balance }}đ</b></p>
         </div>
-        {% elif search_keyword %}
-        <p style="color: red; margin-top:10px;">❌ Không có tài khoản "{{ search_keyword }}"</p>
         {% endif %}
     </div>
 
-    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ffeeba;">
+    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
         <h3>🎁 GIFT TIỀN CỨU TRỢ NGƯỜI CHƠI</h3>
         <form method="POST" action="/admin/gift">
             <div style="display: flex; gap: 10px;">
-                <input type="text" name="gift_username" placeholder="Tên tài khoản nhận..." required>
+                <input type="text" name="gift_username" placeholder="Tên tài khoản..." required>
                 <input type="number" name="gift_amount" placeholder="Số tiền..." required>
             </div>
             <button type="submit" style="background: #ff9800; margin-top: 5px;">XÁC NHẬN GIFT TIỀN 🚀</button>
         </form>
     </div>
 
-    <h3>🚨 CHI TIẾT THẺ KHÁCH ĐÃ GỬI (ƯU TIÊN VIETTEL, GARENA, ZING)</h3>
+    <h3>🚨 CHI TIẾT THẺ KHÁCH ĐÃ GỬI</h3>
     <table>
         <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Số Seri</th><th>Mã Thẻ (Code)</th><th>Trạng thái</th><th>Hành động</th></tr>
         {% for c in all_cards %}
         <tr>
             <td><b>{{ c.username }}</b></td>
-            <td>
-                {% if c.type in ["viettel", "garena", "zing"] %}
-                    <span style="color: #ff9800; font-weight: bold;">🔥 {{ c.type.upper() }}</span>
-                {% else %}
-                    {{ c.type.upper() }}
-                {% endif %}
-            </td>
+            <td>{% if c.type in ["viettel", "garena", "zing"] %}<span style="color: #ff9800; font-weight: bold;">🔥 {{ c.type.upper() }}</span>{% else %}{{ c.type.upper() }}{% endif %}</td>
             <td>{{ c.amount }}đ</td>
             <td style="color: #0054A5; font-weight: bold;">{{ c.serial }}</td>
             <td style="color: #E51F27; font-weight: bold;">{{ c.code }}</td>
@@ -251,7 +198,7 @@ ADMIN_HTML = BASE_CSS + """
         </tr>
         {% endfor %}
     </table>
-    <br><a href="/dashboard">Xem trang với tư cách khách hàng</a>
+    <br><a href="/dashboard">Quay lại trang Dashboard khách hàng</a>
 </div>
 """
 
@@ -279,8 +226,7 @@ def dashboard():
     if 'username' not in session: return redirect(url_for('index'))
     user = session['username']
     my_cards = [c for c in CARDS_SUBMITTED if c['username'] == user]
-    my_orders = [o for o in BUY_ORDERS if o['username'] == user]
-    return render_template_string(DASHBOARD_HTML, username=user, balance=USERS.get(user, {'balance':0})['balance'], my_cards=my_cards, my_orders=my_orders, card_types=CARD_TYPES, denominations=DENOMINATIONS)
+    return render_template_string(DASHBOARD_HTML, username=user, balance=USERS.get(user, {'balance':0})['balance'], my_cards=my_cards, card_types=CARD_TYPES, denominations=DENOMINATIONS)
 
 @app.route('/submit-card', methods=['POST'])
 def submit_card():
@@ -294,51 +240,54 @@ def submit_card():
     save_cards()
     return redirect(url_for('dashboard'))
 
+# --- ĐƯỜNG DẪN ĐƯỢC GIỮ NGUYÊN NHƯNG CHECK TÀI KHOẢN DINH_KHOI28215 ---
 @app.route('/secret-admin-panel')
 def admin_panel():
     load_data()
+    # Kiểm tra phân quyền chính xác tên Admin của bạn
+    if 'username' not in session or session['username'] != ADMIN_USERNAME:
+        return "<h3>❌ CẢNH BÁO: Bạn không có quyền truy cập trang quản trị bí mật này!</h3>", 403
+
     search_keyword = request.args.get('search_user', '').strip()
     search_result = None
     if search_keyword in USERS:
         search_result = USERS[search_keyword]
         search_result['username'] = search_keyword
     
-    return render_template_string(ADMIN_HTML, all_cards=CARDS_SUBMITTED, all_orders=BUY_ORDERS, search_keyword=search_keyword, search_result=search_result)
+    return render_template_string(ADMIN_HTML, all_cards=CARDS_SUBMITTED, search_keyword=search_keyword, search_result=search_result)
 
 @app.route('/admin/gift', methods=['POST'])
 def admin_gift():
     load_data()
+    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     target_user = request.form['gift_username'].strip()
     gift_amount = int(request.form['gift_amount'])
-    
-    if target_user in USERS:
-        USERS[target_user]['balance'] += gift_amount
-    else:
-        USERS[target_user] = {'password': '123', 'contact': 'Admin Gift', 'balance': gift_amount}
-    
+    if target_user in USERS: USERS[target_user]['balance'] += gift_amount
+    else: USERS[target_user] = {'password': '123', 'contact': 'Admin Gift', 'balance': gift_amount}
     save_users()
-    return f"<script>alert('Đã xử lý Gift xong!'); window.location='/secret-admin-panel';</script>"
+    return "<script>alert('Đã xử lý Gift xong!'); window.location='/secret-admin-panel';</script>"
 
 @app.route('/admin/approve/<int:card_id>')
 def admin_approve(card_id):
     load_data()
+    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     card = next((c for c in CARDS_SUBMITTED if c['id'] == card_id), None)
     if card and card['status'] == 'Chờ duyệt':
         card['status'] = 'Thành công'
-        if card['username'] in USERS:
-            USERS[card['username']]['balance'] += card['amount']
+        if card['username'] in USERS: USERS[card['username']]['balance'] += card['amount']
         save_users()
         save_cards()
-    return redirect(url_for('admin_panel'))
+    return redirect('/secret-admin-panel')
 
 @app.route('/admin/reject/<int:card_id>')
 def admin_reject(card_id):
     load_data()
+    if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     card = next((c for c in CARDS_SUBMITTED if c['id'] == card_id), None)
     if card and card['status'] == 'Chờ duyệt':
         card['status'] = 'Thẻ lỗi/Sai mã'
         save_cards()
-    return redirect(url_for('admin_panel'))
+    return redirect('/secret-admin-panel')
 
 @app.route('/logout')
 def logout():
@@ -348,4 +297,3 @@ def logout():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-                      
