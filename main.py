@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "doitheuytin_sieucap"
 
 # =================================================================
-# 🔗 THÔNG TIN SUPABASE CỦA BẠN ĐÃ ĐƯỢC TỰ ĐỘNG CÀI ĐẶT
+# 🔗 THÔNG TIN SUPABASE CỦA BẠN (Đã thay bằng Secret Key đặc quyền)
 # =================================================================
 SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
 SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
@@ -52,9 +52,7 @@ BASE_CSS = """
 LOGIN_HTML = BASE_CSS + """
 <div class="container" style="max-width: 500px; margin-top: 40px;">
     <h2 style="text-align: center; border: none; margin-bottom: 30px;">HỆ THỐNG ĐỔI THẺ CAO ĐIỆN TỬ</h2>
-    
     {% if msg %}<div style="color: red; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ msg }}</div>{% endif %}
-
     <div class="auth-box">
         <h3>🔑 ĐĂNG NHẬP TÀI KHOẢN</h3>
         <form method="POST" action="/login">
@@ -63,7 +61,6 @@ LOGIN_HTML = BASE_CSS + """
             <button type="submit" style="background-color: #2196F3;">ĐĂNG NHẬP</button>
         </form>
     </div>
-
     <div class="auth-box" style="background-color: #f1f8e9;">
         <h3 style="color: #2e7d32; border-bottom-color: #c8e6c9;">📝 ĐĂNG KÝ TÀI KHOẢN MỚI</h3>
         <form method="POST" action="/register">
@@ -131,16 +128,40 @@ ADMIN_HTML = """
 <head><meta name="robots" content="noindex, nofollow"></head>
 """ + BASE_CSS + """
 <div class="container" style="max-width: 950px;">
-    <h2>🔒 TRANG QUẢN TRỊ SUPABASE (ĐÃ ẨN)</h2>
+    <h2>🔒 TRANG QUẢN TRỊ ADMIN</h2>
+    
+    <div style="background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ccc;">
+        <h3>🔍 TRA CỨU SỐ DƯ TÀI KHOẢN</h3>
+        <form method="GET" action="/secret-admin-panel">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" name="search_user" placeholder="Nhập chính xác tên tài khoản khách hàng..." value="{{ search_keyword }}" required>
+                <button type="submit" style="background: #2196F3; width: auto; padding: 0 25px;">Tìm Kiếm</button>
+            </div>
+        </form>
+        
+        {% if search_keyword %}
+            <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 6px; border: 1px dashed #2196F3;">
+                {% if search_result %}
+                    <p style="margin: 5px 0;">👤 Tên tài khoản: <b style="color:#2196F3; font-size:16px;">{{ search_result.username }}</b></p>
+                    <p style="margin: 5px 0;">💰 Số dư tài khoản: <b style="color:#28a745; font-size:16px;">{{ search_result.balance }}đ</b></p>
+                    <p style="margin: 5px 0;">📞 Thông tin liên hệ: <b>{{ search_result.contact }}</b></p>
+                {% else %}
+                    <p style="color: red; margin: 0; font-weight: bold;">❌ Không tìm thấy người dùng có tên: "{{ search_keyword }}"</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
     <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
-        <h3>🎁 GIFT TIỀN</h3>
+        <h3>🎁 GIFT TIỀN HỆ THỐNG</h3>
         <form method="POST" action="/admin/gift">
             <input type="text" name="gift_username" placeholder="Tên tài khoản..." required>
             <input type="number" name="gift_amount" placeholder="Số tiền..." required>
             <button type="submit" style="background: #ff9800; margin-top: 5px;">XÁC NHẬN GIFT</button>
         </form>
     </div>
-    <h3>🚨 THẺ CHỜ DUYỆT</h3>
+    
+    <h3>🚨 DANH SÁCH THẺ CHỜ DUYỆT</h3>
     <table>
         <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Trạng thái</th><th>Hành động</th></tr>
         {% for c in all_cards %}
@@ -209,11 +230,21 @@ def submit_card():
     }).execute()
     return redirect(url_for('dashboard'))
 
+# --- TRANG QUẢN TRỊ ADMIN ĐÃ TINH CHỈNH THEO YÊU CẦU ---
 @app.route('/secret-admin-panel')
 def admin_panel():
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
+    
+    # Tìm kiếm tài khoản (Chỉ hiển thị tên và tiền, liên hệ)
+    search_keyword = request.args.get('search_user', '').strip()
+    search_result = None
+    if search_keyword:
+        user_query = supabase.table("users").select("username", "balance", "contact").eq("username", search_keyword).execute()
+        if user_query.data:
+            search_result = user_query.data[0]
+
     all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").execute()
-    return render_template_string(ADMIN_HTML, all_cards=all_cards.data)
+    return render_template_string(ADMIN_HTML, all_cards=all_cards.data, search_keyword=search_keyword, search_result=search_result)
 
 @app.route('/admin/gift', methods=['POST'])
 def admin_gift():
@@ -254,4 +285,4 @@ def logout():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-    
+            
