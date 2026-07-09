@@ -9,7 +9,7 @@ app.secret_key = "doitheuytin_sieucap"
 # 🔗 THÔNG TIN SUPABASE CỦA BẠN ĐÃ ĐƯỢC TỰ ĐỘNG CÀI ĐẶT
 # =================================================================
 SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
-SUPABASE_KEY = "sb_publishable_Mr2bWaJ-2j0Ffs5V1J70kw_OrroVSxv"
+SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
