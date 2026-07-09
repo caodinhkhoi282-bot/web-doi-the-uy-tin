@@ -184,7 +184,7 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
     </table>
     <br><h3>🛒 ĐƠN KHÁCH ĐẶT MUA THẺ</h3>
     <table>
-        <tr><th>Người mua</th><th>Gmail nhận</th><th>Thẻ mua</th><th>Mệnh giá</th><th>Xử lý</th></tr>
+        <tr><th>Người mua</th><th>Liên hệ</th><th>Thẻ mua</th><th>Mệnh giá</th><th>Xử lý</th></tr>
         {% for b in all_bought_cards %}
         <tr><td>{{ b.get('username','Ẩn danh') }}</td><td style="color:#ff5252; font-weight:bold;">{{ b.get('contact_info','') }}</td><td>{{ b.get('type','').upper() }}</td><td>{{ b.get('amount',0) }}đ</td><td><a href="/admin/complete-buy/{{ b.get('id') }}" style="background:#4caf50; color:white; padding:6px 10px; text-decoration:none; border-radius:4px; font-weight:bold;">✓ ĐÃ GỬI</a></td></tr>
         {% endfor %}
