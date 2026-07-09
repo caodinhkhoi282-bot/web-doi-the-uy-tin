@@ -46,6 +46,8 @@ BASE_CSS = """
     .bg-warning { background-color: #ffc107; color: #fff; }
     .bg-success { background-color: #28a745; color: #fff; }
     .bg-danger { background-color: #dc3545; color: #fff; }
+    .btn-close { color: #dc3545; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 10px; cursor: pointer; }
+    .btn-close:hover { text-decoration: underline; }
 </style>
 """
 
@@ -140,7 +142,11 @@ ADMIN_HTML = """
         </form>
         
         {% if search_keyword %}
-            <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 6px; border: 1px dashed #2196F3;">
+            <div style="margin-top: 15px; background: white; padding: 15px; border-radius: 6px; border: 1px dashed #2196F3; position: relative;">
+                <div style="position: absolute; top: 10px; right: 15px;">
+                    <a href="/secret-admin-panel" class="btn-close">❌ Đóng kết quả</a>
+                </div>
+                
                 {% if search_result %}
                     <p style="margin: 5px 0;">👤 Tên tài khoản: <b style="color:#2196F3; font-size:16px;">{{ search_result.username }}</b></p>
                     <p style="margin: 5px 0;">💰 Số dư tài khoản: <b style="color:#28a745; font-size:16px;">{{ search_result.balance }}đ</b></p>
@@ -230,12 +236,10 @@ def submit_card():
     }).execute()
     return redirect(url_for('dashboard'))
 
-# --- TRANG QUẢN TRỊ ADMIN ĐÃ TINH CHỈNH THEO YÊU CẦU ---
 @app.route('/secret-admin-panel')
 def admin_panel():
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     
-    # Tìm kiếm tài khoản (Chỉ hiển thị tên và tiền, liên hệ)
     search_keyword = request.args.get('search_user', '').strip()
     search_result = None
     if search_keyword:
@@ -285,4 +289,4 @@ def logout():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-            
+    
