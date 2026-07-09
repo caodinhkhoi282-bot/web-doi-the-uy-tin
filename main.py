@@ -144,9 +144,9 @@ DASHBOARD_HTML = BASE_CSS + """
         <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Thông tin thẻ</th><th>Trạng thái</th></tr>
         {% for c in deposit_cards %}
         <tr>
-            <td>{{ c.type.upper() }}</td><td>{{ c.amount }}đ</td>
-            <td>S: {{ c.serial }} <br> M: {{ c.code }}</td>
-            <td><span class="badge {% if c.status=='Chờ duyệt' %}bg-warning{% elif c.status=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.status }}</span></td>
+            <td>{{ c.get('type', '').upper() }}</td><td>{{ c.get('amount', 0) }}đ</td>
+            <td>S: {{ c.get('serial', '') }} <br> M: {{ c.get('code', '') }}</td>
+            <td><span class="badge {% if c.get('status')=='Chờ duyệt' %}bg-warning{% elif c.get('status')=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status', '') }}</span></td>
         </tr>
         {% endfor %}
     </table>
@@ -158,10 +158,10 @@ DASHBOARD_HTML = BASE_CSS + """
         <tr><th>Loại thẻ mua</th><th>Mệnh giá</th><th>Trạng thái đơn hàng</th></tr>
         {% for c in buy_cards %}
         <tr>
-            <td><b style="color:blue;">{{ c.type.upper() }}</b></td><td>{{ c.amount }}đ</td>
+            <td><b style="color:blue;">{{ c.get('type', '').upper() }}</b></td><td>{{ c.get('amount', 0) }}đ</td>
             <td>
-                <span class="badge {% if c.status=='Chờ xử lý' %}bg-warning{% elif c.status=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">
-                    {{ c.status }}
+                <span class="badge {% if c.get('status')=='Chờ xử lý' %}bg-warning{% elif c.get('status')=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ c.get('status', '') }}
                 </span>
             </td>
         </tr>
@@ -319,8 +319,12 @@ def dashboard():
     balance = user_data.data[0]['balance'] if user_data.data else 0
     
     card_data = supabase.table("cards").select("*").eq("username", user).order("id", desc=True).execute()
-    deposit_cards = [c for c in card_data.data if not c['type'].startswith("Mua")]
-    buy_cards = [c for c in card_data.data if c['type'].startswith("Mua")]
+    
+    deposit_cards = []
+    buy_cards = []
+    if card_data.data:
+        deposit_cards = [c for c in card_data.data if c.get('type') and not c['type'].startswith("Mua")]
+        buy_cards = [c for c in card_data.data if c.get('type') and c['type'].startswith("Mua")]
     
     return render_template_string(DASHBOARD_HTML, username=user, balance=balance, deposit_cards=deposit_cards, buy_cards=buy_cards, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK, msg=request.args.get('msg'), error=request.args.get('error'))
 
@@ -378,6 +382,4 @@ def admin_panel():
     if search_keyword:
         user_query = supabase.table("users").select("username", "balance", "contact").eq("username", search_keyword).execute()
         if user_query.data: search_result = user_query.data[0]
-        
-    all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").order("id", desc=True).execute()
-    buy_orders = supabase.table("cards").select("*").eq("status", "Chờ xử lý").order("id", desc=True).execute(
+  
