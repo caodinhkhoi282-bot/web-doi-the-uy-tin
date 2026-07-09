@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "doitheuytin_sieucap"
 
 # =================================================================
-# 🔗 THÔNG TIN SUPABASE CỦA BẠN (Đã thay bằng Secret Key đặc quyền)
+# 🔗 THÔNG TIN SUPABASE CỦA BẠN
 # =================================================================
 SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
 SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
@@ -14,7 +14,7 @@ SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 ADMIN_USERNAME = "DINH_KHOI28215"
-DISCORD_LINK = "https://discord.gg/j6Y9vB5cn"  # Đã cập nhật link Discord chính xác của bạn
+DISCORD_LINK = "https://discord.gg/j6Y9vB5cn"
 
 CARD_TYPES = {
     "viettel": {"name": "Viettel (Ưu tiên)", "color": "#E51F27"},
@@ -52,8 +52,6 @@ BASE_CSS = """
     .bg-danger { background-color: #dc3545; color: #fff; }
     .btn-close { color: #dc3545; text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 10px; cursor: pointer; }
     .btn-close:hover { text-decoration: underline; }
-    
-    /* 🎧 NÚT CHUYỂN HƯỚNG SANG DISCORD GÓC DƯỚI MÀN HÌNH */
     .discord-support-btn { position: fixed; bottom: 20px; right: 20px; background-color: #5865F2; color: white; text-decoration: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(88,101,242,0.4); display: flex; align-items: center; gap: 8px; z-index: 9999; transition: 0.2s; }
     .discord-support-btn:hover { background-color: #4752c4; transform: scale(1.05); color: white; }
 </style>
@@ -66,7 +64,6 @@ LOGO_HTML_TAG = """
 </div>
 """
 
-# ĐỔI THÀNH THẺ <a> ĐỂ BẤM VÀO MỞ THẲNG LINK SANG DISCORD
 DISCORD_BUTTON_TAG = """
 <a class="discord-support-btn" href="{{ discord_link }}" target="_blank">
     <span>💬</span> Hỗ Trợ Discord
@@ -108,6 +105,10 @@ DASHBOARD_HTML = BASE_CSS + """
         <a href="/logout" class="logout-btn">Đăng xuất</a>
     </div>
 </div>
+
+{% if msg %}<div class="container" style="color: blue; font-weight: bold; text-align: center;">{{ msg }}</div>{% endif %}
+{% if error %}<div class="container" style="color: red; font-weight: bold; text-align: center;">{{ error }}</div>{% endif %}
+
 <div class="container">
     <h2>1. GỬI THẺ CÀO (ĐỔI THÀNH TIỀN)</h2>
     <form method="POST" action="/submit-card">
@@ -151,6 +152,33 @@ DASHBOARD_HTML = BASE_CSS + """
 </div>
 """ + DISCORD_BUTTON_TAG
 
+# 📝 THÊM GIAO DIỆN CHỌN MỆNH GIÁ KHI MUA THẺ
+BUY_CARD_HTML = BASE_CSS + """
+<div class="navbar">
+    """ + LOGO_HTML_TAG + """
+    <div>
+        <span>Xin chào: <b>{{ username }}</b> | Số dư: <b style="color:#28a745;">{{ balance }}đ</b></span>
+        <a href="/dashboard" style="color: #2196F3; text-decoration: none; font-weight: bold; margin-left: 15px;">Quay lại</a>
+    </div>
+</div>
+<div class="container" style="max-width: 500px;">
+    <h2>🛒 MUA THẺ SỬ DỤNG SỐ DƯ (HỆ THỐNG TỰ ĐỘNG)</h2>
+    <p>Bạn đang chọn mua loại thẻ: <b style="color: {{ card_info.color }}; font-size: 16px;">{{ card_info.name }}</b></p>
+    
+    <form method="POST" action="/process-buy/{{ card_key }}">
+        <div class="form-group">
+            <label>Chọn mệnh giá cần mua:</label>
+            <select name="buy_amount">
+                {% for d in denominations %}
+                <option value="{{ d }}">{{ d }}đ (Giá gốc)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" style="background-color: {{ card_info.color }};">XÁC NHẬN THANH TOÁN MUA THẺ</button>
+    </form>
+</div>
+""" + DISCORD_BUTTON_TAG
+
 ADMIN_HTML = """
 <head><meta name="robots" content="noindex, nofollow"></head>
 """ + BASE_CSS + """
@@ -168,7 +196,7 @@ ADMIN_HTML = """
         <h3>🔍 TRA CỨU SỐ DƯ TÀI KHOẢN</h3>
         <form method="GET" action="/secret-admin-panel">
             <div style="display: flex; gap: 10px;">
-                <input type="text" name="search_user" placeholder="Nhập chính xác tên tài khoản khách hàng..." value="{{ search_keyword }}" required>
+                <input type="text" name="search_user" placeholder="Nhập chính xác tên tài khoản..." value="{{ search_keyword }}" required>
                 <button type="submit" style="background: #2196F3; width: auto; padding: 0 25px;">Tìm Kiếm</button>
             </div>
         </form>
@@ -178,13 +206,12 @@ ADMIN_HTML = """
                 <div style="position: absolute; top: 10px; right: 15px;">
                     <a href="/secret-admin-panel" class="btn-close">❌ Đóng kết quả</a>
                 </div>
-                
                 {% if search_result %}
                     <p style="margin: 5px 0;">👤 Tên tài khoản: <b style="color:#2196F3; font-size:16px;">{{ search_result.username }}</b></p>
                     <p style="margin: 5px 0;">💰 Số dư tài khoản: <b style="color:#28a745; font-size:16px;">{{ search_result.balance }}đ</b></p>
                     <p style="margin: 5px 0;">📞 Thông tin liên hệ: <b>{{ search_result.contact }}</b></p>
                 {% else %}
-                    <p style="color: red; margin: 0; font-weight: bold;">❌ Không tìm thấy người dùng có tên: "{{ search_keyword }}"</p>
+                    <p style="color: red; margin: 0; font-weight: bold;">❌ Không tìm thấy người dùng: "{{ search_keyword }}"</p>
                 {% endif %}
             </div>
         {% endif %}
@@ -225,13 +252,11 @@ def index():
 def login():
     username = request.form['username'].strip()
     password = request.form['password']
-    
     res = supabase.table("users").select("*").eq("username", username).eq("password", password).execute()
     if res.data:
         session['username'] = username
         return redirect(url_for('dashboard'))
-    else:
-        return redirect(url_for('index', msg="Sai tài khoản hoặc mật khẩu!"))
+    return redirect(url_for('index', msg="Sai tài khoản hoặc mật khẩu!"))
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -256,7 +281,7 @@ def dashboard():
     balance = user_data.data[0]['balance'] if user_data.data else 0
     
     card_data = supabase.table("cards").select("*").eq("username", user).execute()
-    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK)
+    return render_template_string(DASHBOARD_HTML, username=user, balance=balance, my_cards=card_data.data, card_types=CARD_TYPES, denominations=DENOMINATIONS, discord_link=DISCORD_LINK, msg=request.args.get('msg'), error=request.args.get('error'))
 
 @app.route('/submit-card', methods=['POST'])
 def submit_card():
@@ -266,19 +291,59 @@ def submit_card():
         'amount': int(request.form['amount']), 'serial': request.form['serial'].strip(),
         'code': request.form['code'].strip(), 'status': 'Chờ duyệt'
     }).execute()
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard', msg="Gửi thẻ thành công! Vui lòng chờ Admin duyệt."))
+
+# ⚙️ LOGIC TRANG CHỌN MUA THẺ
+@app.route('/buy/<string:card_key>')
+def buy_card_page(card_key):
+    if 'username' not in session: return redirect(url_for('index'))
+    if card_key not in CARD_TYPES: return redirect(url_for('dashboard'))
+    
+    user = session['username']
+    user_data = supabase.table("users").select("balance").eq("username", user).execute()
+    balance = user_data.data[0]['balance'] if user_data.data else 0
+    
+    return render_template_string(BUY_CARD_HTML, username=user, balance=balance, card_key=card_key, card_info=CARD_TYPES[card_key], denominations=DENOMINATIONS, discord_link=DISCORD_LINK)
+
+# ⚙️ LOGIC XỬ LÝ TRỪ TIỀN VÀ TRẢ MÃ THẺ TỰ ĐỘNG
+@app.route('/process-buy/<string:card_key>', methods=['POST'])
+def process_buy(card_key):
+    if 'username' not in session: return redirect(url_for('index'))
+    user = session['username']
+    buy_amount = int(request.form['buy_amount'])
+    
+    user_data = supabase.table("users").select("balance").eq("username", user).execute()
+    if not user_data.data: return redirect(url_for('dashboard'))
+    
+    current_balance = user_data.data[0]['balance']
+    if current_balance < buy_amount:
+        return redirect(url_for('dashboard', error=f"Thất bại: Số dư tài khoản không đủ để mua thẻ {buy_amount}đ!"))
+        
+    # Tính toán số dư mới sau khi trừ tiền
+    new_balance = current_balance - buy_amount
+    supabase.table("users").update({"balance": new_balance}).eq("username", user).execute()
+    
+    # Tạo ngẫu nhiên một mã pin và seri giả lập để trả cho người mua test hệ thống
+    import random
+    fake_serial = str(random.randint(100000000000, 999999999999))
+    fake_code = str(random.randint(1000000000000, 9999999999999))
+    
+    # Thêm bản ghi mua thẻ vào bảng lịch sử duyệt (Đặt trạng thái "Thành công" luôn vì khách dùng số dư mua)
+    supabase.table("cards").insert({
+        'username': user, 'type': f"Mua {card_key.upper()}",
+        'amount': buy_amount, 'serial': fake_serial, 'code': fake_code, 'status': 'Thành công'
+    }).execute()
+    
+    return redirect(url_for('dashboard', msg=f"Mua thẻ thành công! Seri: {fake_serial} | Mã thẻ: {fake_code} (Đã trừ {buy_amount}đ vào tài khoản)."))
 
 @app.route('/secret-admin-panel')
 def admin_panel():
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
-    
     search_keyword = request.args.get('search_user', '').strip()
     search_result = None
     if search_keyword:
         user_query = supabase.table("users").select("username", "balance", "contact").eq("username", search_keyword).execute()
-        if user_query.data:
-            search_result = user_query.data[0]
-
+        if user_query.data: search_result = user_query.data[0]
     all_cards = supabase.table("cards").select("*").eq("status", "Chờ duyệt").execute()
     return render_template_string(ADMIN_HTML, all_cards=all_cards.data, search_keyword=search_keyword, search_result=search_result, discord_link=DISCORD_LINK)
 
@@ -287,12 +352,11 @@ def admin_gift():
     if 'username' not in session or session['username'] != ADMIN_USERNAME: return "Từ chối", 403
     target = request.form['gift_username'].strip()
     amount = int(request.form['gift_amount'])
-    
     user_data = supabase.table("users").select("balance").eq("username", target).execute()
     if user_data.data:
         new_balance = user_data.data[0]['balance'] + amount
         supabase.table("users").update({"balance": new_balance}).eq("username", target).execute()
-    return "<script>alert('Gift tiền thành công!'); window.location='/secret-admin-panel';</script>"
+    return redirect('/secret-admin-panel')
 
 @app.route('/admin/approve/<int:card_id>')
 def admin_approve(card_id):
@@ -320,5 +384,4 @@ def logout():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-        
+    app.run(host
