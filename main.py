@@ -22,9 +22,42 @@ CARD_TYPES = {
 DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
 
 GAMES = {
-    "roblox": {"name": "Roblox", "img": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg", "pack": 20000, "value": "55 Robux"},
-    "freefire": {"name": "Free Fire", "img": "https://logos-world.net/wp-content/uploads/2022/04/Garena-Free-Fire-Logo.png", "pack": 20000, "value": "111 Kim Cương"},
-    "lienquan": {"name": "Liên Quân Mobile", "img": "https://Sliqi.com/images/lienquan.png", "pack": 20000, "value": "40 Quân Huy"}
+    "roblox": {
+        "name": "Roblox", 
+        "img": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg", 
+        "placeholder": "Nhập tên nhân vật Roblox",
+        "rates": {
+            20000: "55 Robux",
+            50000: "145 Robux",
+            100000: "300 Robux",
+            200000: "650 Robux",
+            500000: "1700 Robux"
+        }
+    },
+    "freefire": {
+        "name": "Free Fire", 
+        "img": "https://logos-world.net/wp-content/uploads/2022/04/Garena-Free-Fire-Logo.png", 
+        "placeholder": "Nhập ID nhân vật Free Fire",
+        "rates": {
+            20000: "111 Kim Cương",
+            50000: "280 Kim Cương",
+            100000: "580 Kim Cương",
+            200000: "1190 Kim Cương",
+            500000: "3050 Kim Cương"
+        }
+    },
+    "lienquan": {
+        "name": "Liên Quân Mobile", 
+        "img": "https://Sliqi.com/images/lienquan.png", 
+        "placeholder": "Nhập OpenID hoặc Tên nhân vật",
+        "rates": {
+            20000: "40 Quân Huy",
+            50000: "105 Quân Huy",
+            100000: "210 Quân Huy",
+            200000: "425 Quân Huy",
+            500000: "1080 Quân Huy"
+        }
+    }
 }
 
 COUPONS = {
@@ -181,13 +214,21 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
         </div>
         <div id="tabNapGame" class="container">
             <h2>🎮 HỆ THỐNG NẠP GAME TỰ ĐỘNG</h2>
-            <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+            <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 {% for g_key, g_val in games.items() %}
                 <div style="background:#1c1f2b; border:1px solid #383d52; padding:15px; border-radius:8px; text-align:center;">
                     <img src="{{ g_val.img }}" style="height:55px; object-fit:contain; margin-bottom:10px; max-width:100%;">
-                    <div style="font-weight:bold; margin-bottom:5px; color:#dfb76c;">{{ g_val.name }}</div>
-                    <div style="font-size:12px; color:#b0b5c6; margin-bottom:10px;">Giá: <b>{{ g_val.pack }}đ</b> = <span style="color:#4caf50;">{{ g_val.value }}</span></div>
+                    <div style="font-weight:bold; margin-bottom:10px; color:#dfb76c;">{{ g_val.name }}</div>
                     <form method="POST" action="/process-game/{{ g_key }}">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="text-align:left; font-size:12px;">Chọn gói nạp:</label>
+                            <select name="game_pack" style="padding:6px; font-size:12px;">
+                                {% for price, reward in g_val.rates.items() %}
+                                <option value="{{ price }}">{{ price }}đ = {{ reward }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;"><input type="text" name="game_info" placeholder="{{ g_val.placeholder }}" required style="padding:6px; font-size:12px;"></div>
                         <div class="form-group" style="margin-bottom:8px;"><input type="text" name="coupon" placeholder="Mã giảm giá (nếu có)" style="padding:6px; font-size:12px;"></div>
                         <button type="submit" style="padding:8px; font-size:13px;">NẠP NGAY</button>
                     </form>
@@ -205,9 +246,9 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
             </table>
             <br><h2>📜 ĐƠN ĐẶT MUA THẺ & ĐƠN NẠP GAME</h2>
             <table>
-                <tr><th>Loại giao dịch</th><th>Mệnh giá gốc</th><th>Trạng thái</th></tr>
+                <tr><th>Loại giao dịch</th><th>Mệnh giá gốc</th><th>Thông tin tài khoản / Game</th><th>Trạng thái</th></tr>
                 {% for c in buy_cards %}
-                <tr><td><b style="color:#dfb76c;">{{ c.get('type','').upper() }}</b></td><td>{{ c.get('amount',0) }}đ</td><td><span class="badge {% if c.get('status')=='Chờ xử lý' %}bg-warning{% elif c.get('status')=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
+                <tr><td><b style="color:#dfb76c;">{{ c.get('type','').upper() }}</b></td><td>{{ c.get('amount',0) }}đ</td><td>{{ c.get('serial','') }}</td><td><span class="badge {% if c.get('status')=='Chờ xử lý' %}bg-warning{% elif c.get('status')=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
                 {% endfor %}
             </table>
         </div>
@@ -251,7 +292,7 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
     </table>
     <br><h3>🛒 ĐƠN MUA THẺ & ĐƠN NẠP GAME</h3>
     <table>
-        <tr><th>Người mua</th><th>Gmail nhận / Coupon</th><th>Loại đơn</th><th>Mệnh giá gốc</th><th>Xử lý</th></tr>
+        <tr><th>Người mua</th><th>Liên hệ</th><th>Loại đơn</th><th>Mệnh giá gốc</th><th>Xử lý</th></tr>
         {% for b in all_bought_cards %}
         <tr><td>{{ b.get('username','Ẩn danh') }}</td><td style="color:#ff5252; font-weight:bold;">{{ b.get('contact_info','') }}</td><td>{{ b.get('type','').upper() }}</td><td>{{ b.get('amount',0) }}đ</td><td><a href="/admin/complete-buy/{{ b.get('id') }}" style="background:#4caf50; color:white; padding:6px 10px; text-decoration:none; border-radius:4px; font-weight:bold;">✓ ĐÃ GỬI</a></td></tr>
         {% endfor %}
@@ -310,7 +351,7 @@ def process_buy(card_key):
     ud = supabase.table("users").select("balance", "contact").eq("username", u).execute()
     if not ud.data or ud.data[0]['balance'] < amt: return redirect(url_for('dashboard', error="Số dư không đủ!"))
     supabase.table("users").update({"balance": ud.data[0]['balance'] - amt}).eq("username", u).execute()
-    supabase.table("cards").insert({'username': u, 'type': f"Mua {card_key.upper()}", 'amount': amt, 'serial': ud.data[0]['contact'] or "Không có", 'code': 'Chờ nhận tay', 'status': 'Chờ xử lý'}).execute()
+    supabase.table("cards").insert({'username': u, 'type': f"Mua {card_key.upper()}", 'amount': amt, 'serial': f"Gmail: {ud.data[0]['contact'] or 'Không có'}", 'code': 'Chờ nhận tay', 'status': 'Chờ xử lý'}).execute()
     return redirect(url_for('dashboard', msg="Đặt mua thành công! Hãy chờ nhận qua Gmail."))
 
 @app.route('/process-game/<string:game_key>', methods=['POST'])
@@ -318,7 +359,9 @@ def process_game(game_key):
     if 'username' not in session or game_key not in GAMES: return redirect(url_for('index'))
     u = session['username']
     g_info = GAMES[game_key]
-    orig_amt = g_info['pack']
+    orig_amt = int(request.form.get('game_pack', 20000))
+    reward_val = g_info['rates'].get(orig_amt, "Vật phẩm")
+    g_user = request.form.get('game_info', '').strip()
     cp = request.form.get('coupon', '').strip().upper()
     
     ud = supabase.table("users").select("balance", "contact").eq("username", u).execute()
@@ -333,19 +376,19 @@ def process_game(game_key):
             discount_val = COUPONS[cp]['discount']
             all_u_tx = supabase.table("cards").select("id").eq("username", u).execute().data or []
             total_tx_count = len(all_u_tx)
-            used_cp = supabase.table("cards").select("id").eq("username", u).eq("serial", f"Mã: {cp}").execute().data or []
+            used_cp = supabase.table("cards").select("id").eq("username", u).like("serial", f"%Mã: {cp}%").execute().data or []
             
             if c_type == "newbie":
                 if total_tx_count <= 2 and len(used_cp) == 0:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f"Mã: {cp}"
+                    cp_info = f" | [Dùng mã: {cp}]"
                 else:
                     return redirect(url_for('dashboard', error="Mã NEWBIE chỉ dành cho người mới giao dịch dưới 2 lần và dùng 1 lần duy nhất!"))
             elif c_type == "fancung":
                 success_deposit = supabase.table("cards").select("id").eq("username", u).eq("status", "Thành công").execute().data or []
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f"Mã: {cp}"
+                    cp_info = f" | [Dùng mã: {cp}]"
                 else:
                     return redirect(url_for('dashboard', error="Mã FANCUNG cần nạp trên 5 thẻ thành công và tối đa dùng 10 lần!"))
         else:
@@ -354,8 +397,8 @@ def process_game(game_key):
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để thanh toán gói nạp này!"))
     
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
-    log_serial = cp_info if cp_info else (ud.data[0]['contact'] or "Không có")
-    supabase.table("cards").insert({'username': u, 'type': f"Nạp {g_info['name'].upper()} ({g_info['value']})", 'amount': orig_amt, 'serial': log_serial, 'code': 'Chờ nạp tay', 'status': 'Chờ xử lý'}).execute()
+    log_info = f"Game: {g_user}{cp_info}"
+    supabase.table("cards").insert({'username': u, 'type': f"Nạp {g_info['name'].upper()} ({reward_val})", 'amount': final_amt, 'serial': log_info, 'code': 'Chờ nạp tay', 'status': 'Chờ xử lý'}).execute()
     return redirect(url_for('dashboard', msg=f"Đặt đơn nạp {g_info['name']} thành công! Đang chờ admin xử lý."))
 
 @app.route('/secret-admin-panel')
