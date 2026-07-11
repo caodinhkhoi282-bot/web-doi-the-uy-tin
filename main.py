@@ -12,7 +12,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 ADMIN_USERNAME = "DINH_KHOI28215"
 SUPPORT_LINK = "https://discord.gg/j6Y9vB5cn"
 
-# Cập nhật toàn bộ link ảnh chất lượng cao để hiển thị chuẩn trên mọi thiết bị
 CARD_TYPES = {
     "viettel": {"name": "Viettel", "color": "#e51f27", "img": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Viettel.svg"},
     "vinaphone": {"name": "Vinaphone", "color": "#00a4e4", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Logo_Vinaphone.svg/2560px-Logo_Vinaphone.svg.png"},
@@ -58,7 +57,9 @@ GAMES = {
 COUPONS = {
     "NEWBIE": {"discount": 5000, "type": "newbie"},
     "FANCUNG": {"discount": 30000, "type": "fancung"}
-}BASE_CSS = """
+}
+
+BASE_CSS = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -72,46 +73,34 @@ COUPONS = {
     .brand-name { font-size: 14px; color: #dfb76c; font-weight: bold; text-transform: uppercase; }
     .user-info-area { font-size: 12px; display: flex; align-items: center; gap: 8px; text-align: right; line-height: 1.4; }
     .navbar a.logout-btn { color: #ff5252; text-decoration: none; font-weight: bold; padding: 3px 6px; background: rgba(255,82,82,0.1); border-radius: 4px; margin-left: 5px; }
-    
     .layout-wrapper { display: flex; max-width: 1200px; margin: 15px auto; gap: 15px; padding: 0 12px; flex-direction: column; }
     @media (min-width: 768px) { .layout-wrapper { flex-direction: row; } }
-    
-    /* Hộp menu thông minh: Trên đth cuộn ngang mượt, trên máy tính xếp dọc */
     .sidebar-menu { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
     @media (min-width: 768px) { .sidebar-menu { width: 230px; flex-direction: column; overflow-x: visible; white-space: normal; padding-bottom: 0; } }
-    
     .tab-btn { background: #16181f; border: 1px solid #2d313f; color: #b0b5c6; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; transition: 0.2s; flex-shrink: 0; }
     @media (min-width: 768px) { .tab-btn { text-align: left; font-size: 14px; width: 100%; padding: 12px 16px; } }
     .tab-btn:hover, .tab-btn.active { border-color: #dfb76c; color: #dfb76c; background: #1c1f2b; }
-    
     .main-content { flex: 1; width: 100%; box-sizing: border-box; }
     .container { padding: 15px; border-radius: 12px; background: #16181f; border: 1px solid #2d313f; display: none; }
     .container.active { display: block; }
     .auth-box { border: 1px solid #383d52; border-radius: 8px; padding: 15px; background: #1c1f2b; }
     h2 { color: #dfb76c; border-left: 4px solid #dfb76c; padding-left: 8px; font-size: 15px; text-transform: uppercase; margin-top: 0; }
     h3 { color: #dfb76c; font-size: 14px; border-bottom: 1px solid #383d52; padding-bottom: 6px; margin-top: 0; }
-    
     .form-group { margin-bottom: 12px; }
     label { display: block; margin-bottom: 5px; font-size: 12px; color: #b0b5c6; font-weight: bold; }
     input, select { width: 100%; padding: 10px; border: 1px solid #383d52; border-radius: 6px; box-sizing: border-box; background: #12141d; color: #fff; font-size: 13px; }
     button { background: linear-gradient(135deg, #dfb76c, #b8934b); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold; }
-    
-    /* Grid 3 cột trên điện thoại nhỏ, 4 cột đth to, 6 cột trên máy tính */
     .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
     @media (min-width: 480px) { .card-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; } }
     @media (min-width: 992px) { .card-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; } }
-    
     .card-select-box { background: #1c1f2b; border: 2px solid #2d313f; border-radius: 8px; padding: 6px 2px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px; box-sizing: border-box; }
     .card-select-box input[type="radio"] { position: absolute; top: 3px; right: 3px; margin: 0; width: 12px; height: 12px; }
     .card-select-box.selected { border-color: #dfb76c; background: #222536; }
-    
     .card-logo-img { height: 22px; max-width: 85%; object-fit: contain; margin-bottom: 3px; }
     .card-label-name { font-size: 10px; font-weight: bold; display: block; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
-    
     .card-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1c1f2b; border: 1px solid #2d313f; padding: 8px 2px; border-radius: 8px; text-decoration: none; transition: 0.2s; min-height: 65px; box-sizing: border-box; }
     .card-item-btn:hover { border-color: #dfb76c; }
     .card-item-btn span { color: #dfb76c; font-weight: bold; font-size: 10px; margin-top: 4px; text-align: center; }
-    
     .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #2d313f; margin-top: 10px; }
     table { width: 100%; border-collapse: collapse; background: #12141d; min-width: 450px; }
     th, td { border: 1px solid #2d313f; padding: 8px; font-size: 11px; text-align: left; }
@@ -120,11 +109,9 @@ COUPONS = {
     .bg-warning { background-color: #ff9800; color: #000; }
     .bg-success { background-color: #4caf50; color: #fff; }
     .bg-danger { background-color: #f44336; color: #fff; }
-    
     .support-circle-btn { position: fixed; bottom: 15px; right: 15px; width: 50px; height: 50px; background: #5865F2; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; z-index: 9999; color: white; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .support-circle-btn svg { width: 20px; height: 20px; fill: currentColor; }
     .support-circle-btn span { font-size: 8px; font-weight: bold; margin-top: 1px; }
-    
     .popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; box-sizing: border-box; }
     .popup-box { width: 100%; max-width: 380px; background: #16181f; border: 2px solid #dfb76c; border-radius: 12px; overflow: hidden; }
     .popup-body { position: relative; width: 100%; padding-top: 56.25%; background-image: url('https://openclipart.org/image/800px/312011'); background-size: cover; background-position: center; }
@@ -147,8 +134,8 @@ COUPONS = {
         box.classList.add("selected");
         document.getElementById(radioId).checked = true;
     }
-</script>"""
-
+</script>
+"""
 NAV_LOGO = """<div class="navbar-brand"><img src="https://openclipart.org/image/800px/278555" class="brand-logo"><span class="brand-name">doithecaouytinok.com</span></div>"""
 SUPPORT_BALLOON = f"""<a class="support-circle-btn" href="{SUPPORT_LINK}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12v7c0 1.1.9 2 2 2h3v-8H4v-1c0-4.41 3.59-8 8-8s8 3.59 8 8v1h-3v8h3c1.1 0 2-.9 2-2v-7c0-5.52-4.48-10-10-10z"/></svg><span>Hỗ Trợ</span></a>"""
 
@@ -312,7 +299,32 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
             <p style="font-size:12px; margin-top:6px;">+ {% if search_result %} 👤 User: <b>{{ search_result.get('username') }}</b> | 💰 Ví: <b style="color:#4caf50;">{{ search_result.get('balance') }}đ</b>{% else %} Không tìm thấy khách hàng này!{% endif %} <a href="/secret-admin-panel" style="color:#ff5252; margin-left:8px; text-decoration:none;">[Đóng]</a></p>
         {% endif %}
     </div>
-    <div style=@app.route('/robots.txt')
+    <div style="background: #2a2115; padding: 10px; border-radius: 8px; margin-bottom: 12px; border:1px solid #ff9800;">
+        <h3>🎁 CỘNG / TRỪ TIỀN HỆ THỐNG</h3>
+        <form method="POST" action="/admin/gift"><div class="form-group"><input type="text" name="gift_username" placeholder="Tên tài khoản..." required></div><div class="form-group"><input type="number" name="gift_amount" placeholder="Số tiền cộng (Số âm nếu trừ)..." required></div><button type="submit" style="background:#ff9800; color:#000;">XÁC THỰC THAY ĐỔI</button></form>
+    </div>
+    <h3>🚨 THẺ CÀO CHỜ DUYỆT</h3>
+    <div class="table-responsive">
+        <table>
+            <tr><th>Tài khoản</th><th>Loại thẻ</th><th>Mệnh giá</th><th>Seri / Mã</th><th>Hành động xử lý</th></tr>
+            {% for c in all_cards %}
+            <tr><td>{{ c.get('username') }}</td><td>{{ c.get('type','').upper() }}</td><td>{{ c.get('amount') }}đ</td><td>S: {{ c.get('serial') }}<br>M: {{ c.get('code') }}</td><td><a href="/admin/approve/{{ c.get('id') }}" style="color:#4caf50; font-weight:bold;">[ĐÚNG]</a> | <a href="/admin/reject/{{ c.get('id') }}" style="color:#f44336; font-weight:bold;">[SAI]</a></td></tr>
+            {% endfor %}
+        </table>
+    </div>
+    <br><h3>🛒 ĐƠN HÀNG CHỜ XỬ LÝ (MUA THẺ/GAME)</h3>
+    <div class="table-responsive">
+        <table>
+            <tr><th>Khách</th><th>Liên hệ nhận đơn</th><th>Loại đơn</th><th>Mệnh giá</th><th>Hành động</th></tr>
+            {% for b in all_bought_cards %}
+            <tr><td>{{ b.get('username') }}</td><td style="color:#ff5252; font-weight:bold;">{{ b.get('contact_info') }}</td><td>{{ b.get('type').upper() }}</td><td>{{ b.get('amount') }}đ</td><td><a href="/admin/complete-buy/{{ b.get('id') }}" style="background:#4caf50; color:white; padding:4px 6px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px;">✓ HOÀN TẤT</a></td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+""" + SUPPORT_BALLOON
+
+@app.route('/robots.txt')
 def robots():
     r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
     return Response(r, mimetype='text/plain')
@@ -403,8 +415,7 @@ def process_game(game_key):
                 success_deposit = supabase.table("cards").select("id").eq("username", u).eq("status", "Thành công").execute().data or []
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f" | [Mã: {cp}]"
-                else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
+                    cp_info = f" | [Mã: {cp}]"                else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
         else: return redirect(url_for('dashboard', error="Mã giảm giá này không chính xác."))
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để giao dịch."))
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
@@ -457,4 +468,5 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))"""
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    
