@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask import Flask, render_template_string, request, redirect, url_for, session, Response
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -12,13 +12,26 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 ADMIN_USERNAME = "DINH_KHOI28215"
 SUPPORT_LINK = "https://discord.gg/j6Y9vB5cn"
 
+# HỆ THỐNG LOGO HÌNH ẢNH CÁC LOẠI THẺ THEO YÊU CẦU
 CARD_TYPES = {
-    "viettel": {"name": "Viettel (Ưu tiên)", "color": "#e51f27"},
-    "garena": {"name": "Garena (Ưu tiên)", "color": "#ff0000"},
-    "zing": {"name": "Zing Card (Ưu tiên)", "color": "#4caf50"},
-    "vinaphone": {"name": "Vinaphone", "color": "#00a4e4"},
-    "mobifone": {"name": "Mobifone", "color": "#0054a5"}
+    "viettel": {"name": "Viettel", "color": "#e51f27", "img": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Viettel.svg"},
+    "vinaphone": {"name": "Vinaphone", "color": "#00a4e4", "img": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_Vinaphone.svg"},
+    "mobifone": {"name": "Mobifone", "color": "#0054a5", "img": "https://upload.wikimedia.org/wikipedia/commons/4/40/MobiFone_logo.svg"},
+    "garena": {"name": "Garena", "color": "#ff0000", "img": "https://logos-world.net/wp-content/uploads/2022/04/Garena-Logo.png"},
+    "zing": {"name": "Zing Card", "color": "#4caf50", "img": "https://upload.wikimedia.org/wikipedia/commons/3/36/Logo_Zing.svg"},
+    "vcoin": {"name": "Vcoin", "color": "#ff9800", "img": "https://s20.postimg.cc/mox1n36wd/logo-vcoin.png"},
+    "vietnamobile": {"name": "Vietnamobile", "color": "#ff5722", "img": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Vietnamobile_logo.svg"},
+    "appota": {"name": "Appota", "color": "#00b0ff", "img": "https://appota.com/img/logo.png"},
+    "funcard": {"name": "Funcard", "color": "#ff7043", "img": "https://funcard.vn/images/logo.png"},
+    "scoin": {"name": "Scoin", "color": "#ffc107", "img": "https://scoin.vn/images/logo.png"},
+    "gosu": {"name": "Gosu", "color": "#e65100", "img": "https://gosu.vn/templates/default/images/logo.png"},
+    "sohacoin": {"name": "Sohacoin", "color": "#8d6e63", "img": "https://sohacoin.vn/images/logo.png"},
+    "oncash": {"name": "Oncash VDC", "color": "#4e342e", "img": "https://vdc.com.vn/images/oncash.png"},
+    "kul": {"name": "Thẻ Kul", "color": "#d84315", "img": "https://kul.vn/images/logo.png"},
+    "vega": {"name": "Thẻ Vega", "color": "#37474f", "img": "https://vega.vn/images/logo.png"},
+    "kaspersky": {"name": "Kaspersky", "color": "#004d40", "img": "https://upload.wikimedia.org/wikipedia/commons/a/af/Kaspersky_Lab_logo.svg"}
 }
+
 DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
 
 GAMES = {
@@ -26,37 +39,19 @@ GAMES = {
         "name": "Roblox", 
         "img": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg", 
         "placeholder": "Nhập tên nhân vật Roblox",
-        "rates": {
-            20000: "55 Robux",
-            50000: "145 Robux",
-            100000: "300 Robux",
-            200000: "650 Robux",
-            500000: "1700 Robux"
-        }
+        "rates": {20000: "55 Robux", 50000: "145 Robux", 100000: "300 Robux", 200000: "650 Robux", 500000: "1700 Robux"}
     },
     "freefire": {
         "name": "Free Fire", 
         "img": "https://logos-world.net/wp-content/uploads/2022/04/Garena-Free-Fire-Logo.png", 
         "placeholder": "Nhập ID nhân vật Free Fire",
-        "rates": {
-            20000: "111 Kim Cương",
-            50000: "280 Kim Cương",
-            100000: "580 Kim Cương",
-            200000: "1190 Kim Cương",
-            500000: "3050 Kim Cương"
-        }
+        "rates": {20000: "111 Kim Cương", 50000: "280 Kim Cương", 100000: "580 Kim Cương", 200000: "1190 Kim Cương", 500000: "3050 Kim Cương"}
     },
     "lienquan": {
         "name": "Liên Quân Mobile", 
         "img": "https://Sliqi.com/images/lienquan.png", 
         "placeholder": "Nhập OpenID hoặc Tên nhân vật",
-        "rates": {
-            20000: "40 Quân Huy",
-            50000: "105 Quân Huy",
-            100000: "210 Quân Huy",
-            200000: "425 Quân Huy",
-            500000: "1080 Quân Huy"
-        }
+        "rates": {20000: "40 Quân Huy", 50000: "105 Quân Huy", 100000: "210 Quân Huy", 200000: "425 Quân Huy", 500000: "1080 Quân Huy"}
     }
 }
 
@@ -65,7 +60,15 @@ COUPONS = {
     "FANCUNG": {"discount": 30000, "type": "fancung"}
 }
 
-BASE_CSS = """<style>
+BASE_CSS = """
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đổi Thẻ Cào Uy Tín OK - Nạp Game Tự Động Giá Rẻ Không Chiết Khấu</title>
+    <meta name="description" content="Hệ thống đổi thẻ cào uy tín ok thành tiền mặt, nạp game tự động không phí chiết khấu cao. An toàn, bảo mật, hoạt động 24/7.">
+    <meta name="keywords" content="đổi thẻ, nạp thẻ, nạp game, đổi thẻ không phí, đổi thẻ cào uy tín, nạp robux giá rẻ, đổi thẻ sang tiền mặt">
+</head>
+<style>
     body { background-color: #0d0e12; color: #e0e0e0; font-family: Arial, sans-serif; margin: 0; padding-bottom: 80px; }
     .navbar { background-color: #16181f; border-bottom: 2px solid #dfb76c; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
     .navbar-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
@@ -88,8 +91,19 @@ BASE_CSS = """<style>
     label { display: block; margin-bottom: 5px; font-size: 14px; color: #b0b5c6; font-weight: bold; }
     input, select { width: 100%; padding: 12px; border: 1px solid #383d52; border-radius: 6px; box-sizing: border-box; background: #12141d; color: #fff; }
     button { background: linear-gradient(135deg, #dfb76c, #b8934b); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-    .card-item { text-align: center; color: white; font-weight: bold; text-decoration: none; padding: 15px; border-radius: 8px; display: block; }
+    
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    .card-select-box { background: #1c1f2b; border: 2px solid #2d313f; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+    .card-select-box:hover { border-color: #dfb76c; transform: translateY(-2px); }
+    .card-select-box input[type="radio"] { position: absolute; top: 5px; right: 5px; cursor: pointer; }
+    .card-select-box.selected { border-color: #dfb76c; background: #222536; }
+    .card-logo-img { height: 40px; max-width: 90%; object-fit: contain; margin-bottom: 5px; background: #fff; padding: 3px; border-radius: 4px; }
+    .card-label-name { font-size: 12px; font-weight: bold; display: block; color: #fff; }
+    
+    .card-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 10px; border-radius: 8px; border: 2px solid transparent; text-decoration: none; transition: 0.2s; min-height: 80px; }
+    .card-item-btn:hover { transform: scale(1.03); box-shadow: 0 0 10px rgba(223,183,108,0.5); }
+    .card-item-btn span { color: #000; font-weight: bold; font-size: 12px; margin-top: 5px; }
+
     table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #12141d; }
     th, td { border: 1px solid #2d313f; padding: 12px; font-size: 13px; text-align: left; }
     th { background-color: #1c1f2b; color: #dfb76c; }
@@ -103,7 +117,7 @@ BASE_CSS = """<style>
     .support-circle-btn span { font-size: 10px; font-weight: bold; margin-top: 2px; }
     
     .popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; }
-    .popup-box { width: 95%; max-width: 500px; background: #16181f; border: 2px solid #dfb76c; border-radius: 12px; overflow: hidden; box-shadow: 0 0 30px rgba(223,183,108,0.3); }
+    .popup-box { width: 95%; max-width: 500px; background: #16181f; border: 2px solid #dfb76c; border-radius: 12px; overflow: hidden; }
     .popup-body { position: relative; width: 100%; padding-top: 56.25%; background-image: url('https://woulf-professor-paradox-be-immune-to-gojos-infinite-void-v0-hlq9b8meylkc1.jpg'); background-size: cover; background-position: center; }
     .popup-text-layer { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.55); padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; }
     .popup-top-left { font-size: 11px; color: #00bfff; line-height: 1.4; text-shadow: 1px 1px 2px #000; }
@@ -122,6 +136,12 @@ BASE_CSS = """<style>
         for (i = 0; i < tabBtn.length; i++) { tabBtn[i].classList.remove("active"); }
         document.getElementById(tabId).classList.add("active");
         evt.currentTarget.classList.add("active");
+    }
+    function selectCard(box, radioId) {
+        var boxes = document.getElementsByClassName("card-select-box");
+        for (var i = 0; i < boxes.length; i++) { boxes[i].classList.remove("selected"); }
+        box.classList.add("selected");
+        document.getElementById(radioId).checked = true;
     }
 </script>"""
 
@@ -149,7 +169,7 @@ POPUP_HTML = """
 </div>"""
 
 LOGIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}</div>" + """
-<div style="max-width:800px; text-align:center; margin: 30px auto 10px auto;"><h2 style='border:none; font-size:22px; color:#dfb76c;'>HỆ THỐNG ĐỔI THẺ CAO ĐIỆN TỬ</h2></div>
+<div style="max-width:800px; text-align:center; margin: 30px auto 10px auto;"><h1 style='font-size:22px; color:#dfb76c; margin:0;'>HỆ THỐNG ĐỔI THẺ CAO ĐIỆN TỬ UY TÍN</h1></div>
 {% if msg %}<div style="max-width:500px; margin:0 auto; color: #ff5252; font-weight: bold; text-align: center; margin-bottom: 15px;">{{ msg }}</div>{% endif %}
 <div class="layout-wrapper">
     <div class="sidebar-menu">
@@ -181,145 +201,6 @@ LOGIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}</div>" + """
     </div>
 </div>
 """ + SUPPORT_BALLOON
-DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
-    <div><span>Xin chào: <b style="color:#dfb76c;">{{ username }}</b> | Số dư: <b style="color:#4caf50;">{{ balance }}đ</b></span><a href="/logout" class="logout-btn">Đăng xuất</a></div>
-</div>
-{% if msg %}<div style="max-width:1100px; margin: 15px auto 0 auto; color: #64b5f6; text-align: center; font-weight:bold;">{{ msg }}</div>{% endif %}
-{% if error %}<div style="max-width:1100px; margin: 15px auto 0 auto; color: #ff5252; text-align: center; font-weight:bold;">{{ error }}</div>{% endif %}
-<div class="layout-wrapper">
-    <div class="sidebar-menu">
-        <button class="tab-btn active" onclick="openTab(event, 'tabDoiThe')">💳 ĐỔI THẺ CÀO</button>
-        <button class="tab-btn" onclick="openTab(event, 'tabMuaThe')">🛒 MUA THẺ CÀO</button>
-        <button class="tab-btn" onclick="openTab(event, 'tabNapGame')">🎮 NẠP GAME VÀNG</button>
-        <button class="tab-btn" onclick="openTab(event, 'tabLichSu')">📜 LỊCH SỬ GIAO DỊCH</button>
-    </div>
-    <div class="main-content">
-        <div id="tabDoiThe" class="container active">
-            <h2>1. GỬI THẺ CÀO (ĐỔI THÀNH TIỀN)</h2>
-            <form method="POST" action="/submit-card">
-                <div class="form-group"><label>Loại thẻ:</label><select name="card_type">{% for key, val in card_types.items() %}<option value="{{ key }}">{{ val.name }}</option>{% endfor %}</select></div>
-                <div class="form-group"><label>Mệnh giá:</label><select name="amount">{% for d in denominations %}<option value="{{ d }}">{{ d }}đ</option>{% endfor %}</select></div>
-                <div class="form-group"><label>Số Seri:</label><input type="text" name="serial" required></div>
-                <div class="form-group"><label>Mã số thẻ (sau lớp bạc):</label><input type="text" name="code" required></div>
-                <button type="submit" style="background: linear-gradient(135deg, #4caf50, #388e3c); color:#fff;">GỬI THẺ DUYỆT</button>
-            </form>
-        </div>
-        <div id="tabMuaThe" class="container">
-            <h2>2. CHỌN LOẠI THẺ CẦN MUA (GỬI QUA GMAIL)</h2>
-            <div class="card-grid">
-                {% for key, val in card_types.items() %}
-                <a href="/buy/{{ key }}" class="card-item" style="background-color: {{ val.color }};">Mua {{ val.name }}</a>
-                {% endfor %}
-            </div>
-        </div>
-        <div id="tabNapGame" class="container">
-            <h2>🎮 HỆ THỐNG NẠP GAME TỰ ĐỘNG</h2>
-            <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-                {% for g_key, g_val in games.items() %}
-                <div style="background:#1c1f2b; border:1px solid #383d52; padding:15px; border-radius:8px; text-align:center;">
-                    <img src="{{ g_val.img }}" style="height:55px; object-fit:contain; margin-bottom:10px; max-width:100%;">
-                    <div style="font-weight:bold; margin-bottom:10px; color:#dfb76c;">{{ g_val.name }}</div>
-                    <form method="POST" action="/process-game/{{ g_key }}">
-                        <div class="form-group" style="margin-bottom:8px;">
-                            <label style="text-align:left; font-size:12px;">Chọn gói nạp:</label>
-                            <select name="game_pack" style="padding:6px; font-size:12px;">
-                                {% for price, reward in g_val.rates.items() %}
-                                <option value="{{ price }}">{{ price }}đ = {{ reward }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:8px;"><input type="text" name="game_info" placeholder="{{ g_val.placeholder }}" required style="padding:6px; font-size:12px;"></div>
-                        <div class="form-group" style="margin-bottom:8px;"><input type="text" name="coupon" placeholder="Mã giảm giá (nếu có)" style="padding:6px; font-size:12px;"></div>
-                        <button type="submit" style="padding:8px; font-size:13px;">NẠP NGAY</button>
-                    </form>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div id="tabLichSu" class="container">
-            <h2>📜 LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
-            <table>
-                <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Thông tin</th><th>Trạng thái</th></tr>
-                {% for c in deposit_cards %}
-                <tr><td>{{ c.get('type','').upper() }}</td><td>{{ c.get('amount',0) }}đ</td><td>S: {{ c.get('serial','') }}<br>M: {{ c.get('code','') }}</td><td><span class="badge {% if c.get('status')=='Chờ duyệt' %}bg-warning{% elif c.get('status')=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
-                {% endfor %}
-            </table>
-            <br><h2>📜 ĐƠN ĐẶT MUA THẺ & ĐƠN NẠP GAME</h2>
-            <table>
-                <tr><th>Loại giao dịch</th><th>Mệnh giá gốc</th><th>Thông tin tài khoản / Game</th><th>Trạng thái</th></tr>
-                {% for c in buy_cards %}
-                <tr><td><b style="color:#dfb76c;">{{ c.get('type','').upper() }}</b></td><td>{{ c.get('amount',0) }}đ</td><td>{{ c.get('serial','') }}</td><td><span class="badge {% if c.get('status')=='Chờ xử lý' %}bg-warning{% elif c.get('status')=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
-</div>
-""" + POPUP_HTML + SUPPORT_BALLOON
-
-BUY_CARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
-    <div><span>Xin chào: <b style="color:#dfb76c;">{{ username }}</b> | Số dư: <b style="color:#4caf50;">{{ balance }}đ</b></span><a href="/dashboard" style="margin-left:15px; text-decoration:none; color:#dfb76c;">Quay lại</a></div>
-</div>
-<div class="container active" style="max-width: 500px; margin:40px auto;">
-    <h2>🛒 ĐẶT MUA THẺ CÀO</h2>
-    <p>Bạn chọn: <b style="color: {{ card_info.color }};">{{ card_info.name }}</b></p>
-    <form method="POST" action="/process-buy/{{ card_key }}">
-        <div class="form-group"><label>Chọn mệnh giá:</label><select name="buy_amount">{% for d in denominations %}<option value="{{ d }}">{{ d }}đ</option>{% endfor %}</select></div>
-        <button type="submit" style="background-color: {{ card_info.color }}; color:#fff;">XÁC NHẬN MUA</button>
-    </form>
-</div>
-""" + SUPPORT_BALLOON
-
-ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:#f44336; font-weight:bold;'>[ADMIN]</span><a href='/logout' class='logout-btn'>Đăng xuất</a></div></div>" + """
-<div class="container active" style="max-width: 950px; margin:30px auto;">
-    <h2>🔒 TRANG QUẢN TRỊ ADMIN</h2>
-    <div style="background: #1c1f2b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border:1px solid #383d52;">
-        <h3>🔍 TRA CỨU SỐ DƯ TÀI KHOẢN</h3>
-        <form method="GET" action="/secret-admin-panel"><div style="display:flex; gap:10px;"><input type="text" name="search_user" placeholder="Nhập chính xác tên tài khoản..." value="{{ search_keyword }}" required><button type="submit" style="width:auto;">Tìm Kiếm</button></div></form>
-        {% if search_keyword %}
-            <p style="margin-top:10px;">+ {% if search_result %} 👤 Tên: <b>{{ search_result.get('username') }}</b> | 💰 Số dư: <b style="color:#4caf50;">{{ search_result.get('balance') }}đ</b> | 📞 Gmail: <b>{{ search_result.get('contact') }}</b>{% else %} Không thấy user: "{{ search_keyword }}"{% endif %} <a href="/secret-admin-panel" style="color:#ff5252; margin-left:10px;">✖ Đóng</a></p>
-        {% endif %}
-    </div>
-    <div style="background: #2a2115; padding: 15px; border-radius: 8px; margin-bottom: 20px; border:1px solid #ff9800;">
-        <h3>🎁 GIFT TIỀN HỆ THỐNG</h3>
-        <form method="POST" action="/admin/gift"><div class="form-group"><input type="text" name="gift_username" placeholder="Tên tài khoản..." required></div><div class="form-group"><input type="number" name="gift_amount" placeholder="Số tiền..." required></div><button type="submit" style="background:#ff9800; color:#000;">XÁC NHẬN GIFT</button></form>
-    </div>
-    <h3>🚨 DANH SÁCH THÊ CHỜ DUYỆT</h3>
-    <table>
-        <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Hành động</th></tr>
-        {% for c in all_cards %}
-        <tr><td>{{ c.get('username','Ẩn danh') }}</td><td>{{ c.get('type','').upper() }}</td><td>{{ c.get('amount',0) }}đ</td><td>{{ c.get('serial','') }}</td><td>{{ c.get('code','') }}</td><td><a href="/admin/approve/{{ c.get('id') }}" style="color:#4caf50; font-weight:bold;">[ĐÚNG]</a> | <a href="/admin/reject/{{ c.get('id') }}" style="color:#f44336; font-weight:bold;">[SAI]</a></td></tr>
-        {% endfor %}
-    </table>
-    <br><h3>🛒 ĐƠN MUA THẺ & ĐƠN NẠP GAME</h3>
-    <table>
-        <tr><th>Người mua</th><th>Liên hệ</th><th>Loại đơn</th><th>Mệnh giá gốc</th><th>Xử lý</th></tr>
-        {% for b in all_bought_cards %}
-        <tr><td>{{ b.get('username','Ẩn danh') }}</td><td style="color:#ff5252; font-weight:bold;">{{ b.get('contact_info','') }}</td><td>{{ b.get('type','').upper() }}</td><td>{{ b.get('amount',0) }}đ</td><td><a href="/admin/complete-buy/{{ b.get('id') }}" style="background:#4caf50; color:white; padding:6px 10px; text-decoration:none; border-radius:4px; font-weight:bold;">✓ ĐÃ GỬI</a></td></tr>
-        {% endfor %}
-    </table>
-</div>
-""" + SUPPORT_BALLOON
-
-@app.route('/')
-def index():
-    if 'username' in session: return redirect(url_for('dashboard'))
-    return render_template_string(LOGIN_HTML, msg=request.args.get('msg', ''))
-
-@app.route('/login', methods=['POST'])
-def login():
-    u, p = request.form['username'].strip(), request.form['password']
-    res = supabase.table("users").select("*").eq("username", u).eq("password", p).execute()
-    if res.data: session['username'] = u; return redirect(url_for('dashboard'))
-    return redirect(url_for('index', msg="Sai tài khoản hoặc mật khẩu!"))
-
-@app.route('/register', methods=['POST'])
-def register():
-    u, p, c = request.form['username'].strip(), request.form['password'], request.form.get('contact', '').strip()
-    if supabase.table("users").select("username").eq("username", u).execute().data:
-        return redirect(url_for('index', msg="Tên đăng nhập đã tồn tại!"))
-    supabase.table("users").insert({"username": u, "password": p, "contact": c, "balance": 0}).execute()
-    session['username'] = u; return redirect(url_for('dashboard'))
-
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session: return redirect(url_for('index'))
@@ -353,8 +234,7 @@ def process_buy(card_key):
     supabase.table("users").update({"balance": ud.data[0]['balance'] - amt}).eq("username", u).execute()
     supabase.table("cards").insert({'username': u, 'type': f"Mua {card_key.upper()}", 'amount': amt, 'serial': f"Gmail: {ud.data[0]['contact'] or 'Không có'}", 'code': 'Chờ nhận tay', 'status': 'Chờ xử lý'}).execute()
     return redirect(url_for('dashboard', msg="Đặt mua thành công! Hãy chờ nhận qua Gmail."))
-
-@app.route('/process-game/<string:game_key>', methods=['POST'])
+    @app.route('/process-game/<string:game_key>', methods=['POST'])
 def process_game(game_key):
     if 'username' not in session or game_key not in GAMES: return redirect(url_for('index'))
     u = session['username']
@@ -381,25 +261,22 @@ def process_game(game_key):
             if c_type == "newbie":
                 if total_tx_count <= 2 and len(used_cp) == 0:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f" | [Dùng mã: {cp}]"
-                else:
-                    return redirect(url_for('dashboard', error="Mã NEWBIE chỉ dành cho người mới giao dịch dưới 2 lần và dùng 1 lần duy nhất!"))
+                    cp_info = f" | [Mã: {cp}]"
+                else: return redirect(url_for('dashboard', error="Mã NEWBIE không hợp lệ."))
             elif c_type == "fancung":
                 success_deposit = supabase.table("cards").select("id").eq("username", u).eq("status", "Thành công").execute().data or []
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f" | [Dùng mã: {cp}]"
-                else:
-                    return redirect(url_for('dashboard', error="Mã FANCUNG cần nạp trên 5 thẻ thành công và tối đa dùng 10 lần!"))
-        else:
-            return redirect(url_for('dashboard', error="Mã giảm giá không tồn tại!"))
+                    cp_info = f" | [Mã: {cp}]"
+                else: return redirect(url_for('dashboard', error="Mã FANCUNG không hợp lệ."))
+        else: return redirect(url_for('dashboard', error="Mã không tồn tại."))
 
-    if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để thanh toán gói nạp này!"))
+    if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ!"))
     
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
     log_info = f"Game: {g_user}{cp_info}"
     supabase.table("cards").insert({'username': u, 'type': f"Nạp {g_info['name'].upper()} ({reward_val})", 'amount': final_amt, 'serial': log_info, 'code': 'Chờ nạp tay', 'status': 'Chờ xử lý'}).execute()
-    return redirect(url_for('dashboard', msg=f"Đặt đơn nạp {g_info['name']} thành công! Đang chờ admin xử lý."))
+    return redirect(url_for('dashboard', msg=f"Đặt đơn nạp thành công!"))
 
 @app.route('/secret-admin-panel')
 def admin_panel():
@@ -446,4 +323,4 @@ def logout(): session.pop('username', None); return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-    google-site-verification=oDRMWb-ciV719IrMasx79-Oy9Sa-Gl_-UYMvwVHR4EU
+    
