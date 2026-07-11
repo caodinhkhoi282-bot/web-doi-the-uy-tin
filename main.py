@@ -224,6 +224,7 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     </div>
 </div>
 """ + POPUP_HTML + SUPPORT_BALLOON
+
 BUY_CARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     <div class="user-info-area"><span>👤: <b>{{ username }}</b></span><a href="/dashboard" style="color:#dfb76c; text-decoration:none; font-weight:bold; font-size:12px;">[Quay lại]</a></div>
 </div>
@@ -272,6 +273,7 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
     </div>
 </div>
 """ + SUPPORT_BALLOON
+
 @app.route('/robots.txt')
 def robots():
     r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
@@ -419,7 +421,7 @@ def admin_reject(card_id):
 @app.route('/logout')
 def logout(): 
     session.pop('username', None)
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
