@@ -416,9 +416,11 @@ def process_game(game_key):
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
                     cp_info = f" | [Mã: {cp}]"                
-        else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
+                    else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
         else: return redirect(url_for('dashboard', error="Mã giảm giá này không chính xác."))
+
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để giao dịch."))
+    
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
     supabase.table("cards").insert({'username': u, 'type': f"Nạp {g_info['name'].upper()} ({reward_val})", 'amount': final_amt, 'serial': f"Game: {g_user}{cp_info}", 'code': 'Chờ xử lý', 'status': 'Chờ xử lý'}).execute()
     return redirect(url_for('dashboard', msg="Đã tạo đơn nạp game thành công! Hệ thống đang xử lý gói nạp."))
@@ -435,7 +437,8 @@ def admin_panel():
 
 @app.route('/admin/complete-buy/<int:order_id>')
 def admin_complete_buy(order_id):
-    if 'username' in session and session['username'] == ADMIN_USERNAME: supabase.table("cards").update({"status": "Đã gửi thẻ", "code": "Hoàn thành"}).eq("id", order_id).execute()
+    if 'username' in session and session['username'] == ADMIN_USERNAME: 
+        supabase.table("cards").update({"status": "Đã gửi thẻ", "code": "Hoàn thành"}).eq("id", order_id).execute()
     return redirect('/secret-admin-panel')
 
 @app.route('/admin/gift', methods=['POST'])
@@ -460,7 +463,8 @@ def admin_approve(card_id):
 
 @app.route('/admin/reject/<int:card_id>')
 def admin_reject(card_id):
-    if 'username' in session and session['username'] == ADMIN_USERNAME: supabase.table("cards").update({"status": "Thẻ lỗi/Sai mã"}).eq("id", card_id).execute()
+    if 'username' in session and session['username'] == ADMIN_USERNAME: 
+        supabase.table("cards").update({"status": "Thẻ lỗi/Sai mã"}).eq("id", card_id).execute()
     return redirect('/secret-admin-panel')
 
 @app.route('/logout')
@@ -469,5 +473,6 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
+    import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
     
