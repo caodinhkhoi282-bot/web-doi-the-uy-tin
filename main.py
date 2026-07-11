@@ -12,7 +12,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 ADMIN_USERNAME = "DINH_KHOI28215"
 SUPPORT_LINK = "https://discord.gg/j6Y9vB5cn"
 
-# HỆ THỐNG LOGO HÌNH ẢNH CÁC LOẠI THẺ THEO YÊU CẦU
 CARD_TYPES = {
     "viettel": {"name": "Viettel", "color": "#e51f27", "img": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Viettel.svg"},
     "vinaphone": {"name": "Vinaphone", "color": "#00a4e4", "img": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_Vinaphone.svg"},
@@ -75,13 +74,11 @@ BASE_CSS = """
     .brand-logo { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #dfb76c; }
     .brand-name { font-size: 18px; color: #dfb76c; font-weight: bold; text-transform: uppercase; }
     .navbar a.logout-btn { color: #ff5252; text-decoration: none; font-weight: bold; margin-left: 15px; }
-    
     .layout-wrapper { display: flex; max-width: 1100px; margin: 25px auto; gap: 20px; padding: 0 15px; }
     .sidebar-menu { width: 220px; display: flex; flex-direction: column; gap: 10px; }
     .tab-btn { background: #16181f; border: 1px solid #2d313f; color: #b0b5c6; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: left; font-size: 14px; transition: 0.3s; width:100%; }
     .tab-btn:hover, .tab-btn.active { border-color: #dfb76c; color: #dfb76c; background: #1c1f2b; }
     .main-content { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-    
     .container { padding: 25px; border-radius: 12px; background: #16181f; border: 1px solid #2d313f; display: none; }
     .container.active { display: block; }
     .auth-box { border: 1px solid #383d52; border-radius: 8px; padding: 20px; background: #1c1f2b; }
@@ -91,7 +88,6 @@ BASE_CSS = """
     label { display: block; margin-bottom: 5px; font-size: 14px; color: #b0b5c6; font-weight: bold; }
     input, select { width: 100%; padding: 12px; border: 1px solid #383d52; border-radius: 6px; box-sizing: border-box; background: #12141d; color: #fff; }
     button { background: linear-gradient(135deg, #dfb76c, #b8934b); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-    
     .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 15px; }
     .card-select-box { background: #1c1f2b; border: 2px solid #2d313f; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
     .card-select-box:hover { border-color: #dfb76c; transform: translateY(-2px); }
@@ -99,11 +95,9 @@ BASE_CSS = """
     .card-select-box.selected { border-color: #dfb76c; background: #222536; }
     .card-logo-img { height: 40px; max-width: 90%; object-fit: contain; margin-bottom: 5px; background: #fff; padding: 3px; border-radius: 4px; }
     .card-label-name { font-size: 12px; font-weight: bold; display: block; color: #fff; }
-    
     .card-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; padding: 10px; border-radius: 8px; border: 2px solid transparent; text-decoration: none; transition: 0.2s; min-height: 80px; }
     .card-item-btn:hover { transform: scale(1.03); box-shadow: 0 0 10px rgba(223,183,108,0.5); }
     .card-item-btn span { color: #000; font-weight: bold; font-size: 12px; margin-top: 5px; }
-
     table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #12141d; }
     th, td { border: 1px solid #2d313f; padding: 12px; font-size: 13px; text-align: left; }
     th { background-color: #1c1f2b; color: #dfb76c; }
@@ -111,11 +105,9 @@ BASE_CSS = """
     .bg-warning { background-color: #ff9800; color: #000; }
     .bg-success { background-color: #4caf50; color: #fff; }
     .bg-danger { background-color: #f44336; color: #fff; }
-    
     .support-circle-btn { position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; background: #5865F2; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; z-index: 9999; color: white; border: 2px solid #fff; }
     .support-circle-btn svg { width: 26px; height: 26px; fill: currentColor; }
     .support-circle-btn span { font-size: 10px; font-weight: bold; margin-top: 2px; }
-    
     .popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; }
     .popup-box { width: 95%; max-width: 500px; background: #16181f; border: 2px solid #dfb76c; border-radius: 12px; overflow: hidden; }
     .popup-body { position: relative; width: 100%; padding-top: 56.25%; background-image: url('https://woulf-professor-paradox-be-immune-to-gojos-infinite-void-v0-hlq9b8meylkc1.jpg'); background-size: cover; background-position: center; }
@@ -201,6 +193,100 @@ LOGIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}</div>" + """
     </div>
 </div>
 """ + SUPPORT_BALLOON
+
+DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
+    <div><span>Xin chào: <b style="color:#dfb76c;">{{ username }}</b> | Số dư: <b style="color:#4caf50;">{{ balance }}đ</b></span><a href="/logout" class="logout-btn">Đăng xuất</a></div>
+</div>
+{% if msg %}<div style="max-width:1100px; margin: 15px auto 0 auto; color: #64b5f6; text-align: center; font-weight:bold;">{{ msg }}</div>{% endif %}
+{% if error %}<div style="max-width:1100px; margin: 15px auto 0 auto; color: #ff5252; text-align: center; font-weight:bold;">{{ error }}</div>{% endif %}
+<div class="layout-wrapper">
+    <div class="sidebar-menu">
+        <button class="tab-btn active" onclick="openTab(event, 'tabDoiThe')">💳 ĐỔI THẺ CÀO</button>
+        <button class="tab-btn" onclick="openTab(event, 'tabMuaThe')">🛒 MUA THẺ CÀO</button>
+        <button class="tab-btn" onclick="openTab(event, 'tabNapGame')">🎮 NẠP GAME VÀNG</button>
+        <button class="tab-btn" onclick="openTab(event, 'tabLichSu')">📜 LỊCH SỬ GIAO DỊCH</button>
+    </div>
+    <div class="main-content">
+        <div id="tabDoiThe" class="container active">
+            <h2>1. GỬI THẺ CÀO (ĐỔI THÀNH TIỀN)</h2>
+            <form method="POST" action="/submit-card">
+                <div class="form-group">
+                    <label>Chọn Loại Thẻ Cần Đổi:</label>
+                    <div class="card-grid">
+                        {% for key, val in card_types.items() %}
+                        <div class="card-select-box {% if loop.first %}selected{% endif %}" onclick="selectCard(this, 'radio_dep_{{ key }}')">
+                            <input type="radio" name="card_type" value="{{ key }}" id="radio_dep_{{ key }}" {% if loop.first %}checked{% endif %}>
+                            <img src="{{ val.img }}" class="card-logo-img"><br>
+                            <span class="card-label-name">{{ val.name }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group"><label>Mệnh giá:</label><select name="amount">{% for d in denominations %}<option value="{{ d }}">{{ d }}đ</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Số Seri:</label><input type="text" name="serial" required></div>
+                <div class="form-group"><label>Mã số thẻ (sau lớp bạc):</label><input type="text" name="code" required></div>
+                <button type="submit" style="background: linear-gradient(135deg, #4caf50, #388e3c); color:#fff;">GỬI THẺ DUYỆT</button>
+            </form>
+        </div>
+        <div id="tabMuaThe" class="container">
+            <h2>2. CHỌN LOẠI THẺ CẦN MUA (GỬI QUA GMAIL)</h2>
+            <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                {% for key, val in card_types.items() %}
+                <a href="/buy/{{ key }}" class="card-item-btn">
+                    <img src="{{ val.img }}" style="height:35px; max-width:95%; object-fit:contain;">
+                    <span>Mua {{ val.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="tabNapGame" class="container">
+            <h2>🎮 HỆ THỐNG NẠP GAME TỰ ĐỘNG</h2>
+            <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                {% for g_key, g_val in games.items() %}
+                <div style="background:#1c1f2b; border:1px solid #383d52; padding:15px; border-radius:8px; text-align:center;">
+                    <img src="{{ g_val.img }}" style="height:55px; object-fit:contain; margin-bottom:10px; max-width:100%;">
+                    <div style="font-weight:bold; margin-bottom:10px; color:#dfb76c;">{{ g_val.name }}</div>
+                    <form method="POST" action="/process-game/{{ g_key }}">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="text-align:left; font-size:12px;">Chọn gói nạp:</label>
+                            <select name="game_pack" style="padding:6px; font-size:12px;">
+                                {% for price, reward in g_val.rates.items() %}
+                                <option value="{{ price }}">{{ price }}đ = {{ reward }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;"><input type="text" name="game_info" placeholder="{{ g_val.placeholder }}" required style="padding:6px; font-size:12px;"></div>
+                        <div class="form-group" style="margin-bottom:8px;"><input type="text" name="coupon" placeholder="Mã giảm giá (nếu có)" style="padding:6px; font-size:12px;"></div>
+     @app.route('/robots.txt')
+def robots():
+    r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
+    return Response(r, mimetype='text/plain')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    s = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://web-i-th.onrender.com/</loc><priority>1.0</priority></url></urlset>'
+    return Response(s, mimetype='text/xml')
+
+@app.route('/')
+def index():
+    if 'username' in session: return redirect(url_for('dashboard'))
+    return render_template_string(LOGIN_HTML, msg=request.args.get('msg', ''))
+
+@app.route('/login', methods=['POST'])
+def login():
+    u, p = request.form['username'].strip(), request.form['password']
+    res = supabase.table("users").select("*").eq("username", u).eq("password", p).execute()
+    if res.data: session['username'] = u; return redirect(url_for('dashboard'))
+    return redirect(url_for('index', msg="Sai tài khoản hoặc mật khẩu!"))
+
+@app.route('/register', methods=['POST'])
+def register():
+    u, p, c = request.form['username'].strip(), request.form['password'], request.form.get('contact', '').strip()
+    if supabase.table("users").select("username").eq("username", u).execute().data:
+        return redirect(url_for('index', msg="Tên đăng nhập đã tồn tại!"))
+    supabase.table("users").insert({"username": u, "password": p, "contact": c, "balance": 0}).execute()
+    session['username'] = u; return redirect(url_for('dashboard'))
+
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session: return redirect(url_for('index'))
@@ -234,7 +320,8 @@ def process_buy(card_key):
     supabase.table("users").update({"balance": ud.data[0]['balance'] - amt}).eq("username", u).execute()
     supabase.table("cards").insert({'username': u, 'type': f"Mua {card_key.upper()}", 'amount': amt, 'serial': f"Gmail: {ud.data[0]['contact'] or 'Không có'}", 'code': 'Chờ nhận tay', 'status': 'Chờ xử lý'}).execute()
     return redirect(url_for('dashboard', msg="Đặt mua thành công! Hãy chờ nhận qua Gmail."))
-    @app.route('/process-game/<string:game_key>', methods=['POST'])
+
+@app.route('/process-game/<string:game_key>', methods=['POST'])
 def process_game(game_key):
     if 'username' not in session or game_key not in GAMES: return redirect(url_for('index'))
     u = session['username']
@@ -243,11 +330,9 @@ def process_game(game_key):
     reward_val = g_info['rates'].get(orig_amt, "Vật phẩm")
     g_user = request.form.get('game_info', '').strip()
     cp = request.form.get('coupon', '').strip().upper()
-    
     ud = supabase.table("users").select("balance", "contact").eq("username", u).execute()
     if not ud.data: return redirect(url_for('dashboard', error="Tài khoản lỗi!"))
     current_bal = ud.data[0]['balance']
-    
     final_amt = orig_amt
     cp_info = ""
     if cp:
@@ -257,7 +342,6 @@ def process_game(game_key):
             all_u_tx = supabase.table("cards").select("id").eq("username", u).execute().data or []
             total_tx_count = len(all_u_tx)
             used_cp = supabase.table("cards").select("id").eq("username", u).like("serial", f"%Mã: {cp}%").execute().data or []
-            
             if c_type == "newbie":
                 if total_tx_count <= 2 and len(used_cp) == 0:
                     final_amt = max(0, orig_amt - discount_val)
@@ -270,13 +354,11 @@ def process_game(game_key):
                     cp_info = f" | [Mã: {cp}]"
                 else: return redirect(url_for('dashboard', error="Mã FANCUNG không hợp lệ."))
         else: return redirect(url_for('dashboard', error="Mã không tồn tại."))
-
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ!"))
-    
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
     log_info = f"Game: {g_user}{cp_info}"
     supabase.table("cards").insert({'username': u, 'type': f"Nạp {g_info['name'].upper()} ({reward_val})", 'amount': final_amt, 'serial': log_info, 'code': 'Chờ nạp tay', 'status': 'Chờ xử lý'}).execute()
-    return redirect(url_for('dashboard', msg=f"Đặt đơn nạp thành công!"))
+    return redirect(url_for('dashboard', msg="Đặt đơn nạp thành công!"))
 
 @app.route('/secret-admin-panel')
 def admin_panel():
@@ -319,8 +401,9 @@ def admin_reject(card_id):
     return redirect('/secret-admin-panel')
 
 @app.route('/logout')
-def logout(): session.pop('username', None); return redirect(url_for('index'))
+def logout(): 
+    session.pop('username', None)
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-    
