@@ -421,7 +421,7 @@ def admin_reject(card_id):
 @app.route('/logout')
 def logout(): 
     session.pop('username', None)
-        return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
