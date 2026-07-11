@@ -273,7 +273,6 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
     </div>
 </div>
 """ + SUPPORT_BALLOON
-
 @app.route('/robots.txt')
 def robots():
     r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
@@ -425,4 +424,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-    
+
