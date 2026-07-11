@@ -415,7 +415,8 @@ def process_game(game_key):
                 success_deposit = supabase.table("cards").select("id").eq("username", u).eq("status", "Thành công").execute().data or []
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f" | [Mã: {cp}]"                else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
+                    cp_info = f" | [Mã: {cp}]"                
+        else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
         else: return redirect(url_for('dashboard', error="Mã giảm giá này không chính xác."))
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để giao dịch."))
     supabase.table("users").update({"balance": current_bal - final_amt}).eq("username", u).execute()
