@@ -139,7 +139,6 @@ BASE_CSS = """
 
 NAV_LOGO = """<div class="navbar-brand"><img src="https://img.freepik.com/premium-vector/d-letter-logo-luxury-gold-color_755034-846.jpg" class="brand-logo"><span class="brand-name">doithecaouytinok.com</span></div>"""
 SUPPORT_BALLOON = f"""<a class="support-circle-btn" href="{SUPPORT_LINK}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12v7c0 1.1.9 2 2 2h3v-8H4v-1c0-4.41 3.59-8 8-8s8 3.59 8 8v1h-3v8h3c1.1 0 2-.9 2-2v-7c0-5.52-4.48-10-10-10z"/></svg><span>Hỗ Trợ</span></a>"""
-
 POPUP_HTML = """
 <div class="popup-overlay" id="announcementPopup">
     <div class="popup-box">
@@ -257,7 +256,77 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
                         </div>
                         <div class="form-group" style="margin-bottom:8px;"><input type="text" name="game_info" placeholder="{{ g_val.placeholder }}" required style="padding:6px; font-size:12px;"></div>
                         <div class="form-group" style="margin-bottom:8px;"><input type="text" name="coupon" placeholder="Mã giảm giá (nếu có)" style="padding:6px; font-size:12px;"></div>
-     @app.route('/robots.txt')
+                        <button type="submit" style="padding:8px; font-size:13px;">NẠP NGAY</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="tabLichSu" class="container">
+            <h2>📜 LỊCH SỬ GỬI THẺ CỦA BẠN</h2>
+            <table>
+                <tr><th>Loại thẻ</th><th>Mệnh giá</th><th>Thông tin</th><th>Trạng thái</th></tr>
+                {% for c in deposit_cards %}
+                <tr><td>{{ c.get('type','').upper() }}</td><td>{{ c.get('amount',0) }}đ</td><td>S: {{ c.get('serial','') }}<br>M: {{ c.get('code','') }}</td><td><span class="badge {% if c.get('status')=='Chờ duyệt' %}bg-warning{% elif c.get('status')=='Thành công' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
+                {% endfor %}
+            </table>
+            <br><h2>📜 ĐƠN ĐẶT MUA THẺ & ĐƠN NẠP GAME</h2>
+            <table>
+                <tr><th>Loại giao dịch</th><th>Mệnh giá gốc</th><th>Thông tin tài khoản / Game</th><th>Trạng thái</th></tr>
+                {% for c in buy_cards %}
+                <tr><td><b style="color:#dfb76c;">{{ c.get('type','').upper() }}</b></td><td>{{ c.get('amount',0) }}đ</td><td>{{ c.get('serial','') }}</td><td><span class="badge {% if c.get('status')=='Chờ xử lý' %}bg-warning{% elif c.get('status')=='Đã gửi thẻ' %}bg-success{% else %}bg-danger{% endif %}">{{ c.get('status','') }}</span></td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+""" + POPUP_HTML + SUPPORT_BALLOON
+
+BUY_CARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
+    <div><span>Xin chào: <b style="color:#dfb76c;">{{ username }}</b> | Số dư: <b style="color:#4caf50;">{{ balance }}đ</b></span><a href="/dashboard" style="margin-left:15px; text-decoration:none; color:#dfb76c;">Quay lại</a></div>
+</div>
+<div class="container active" style="max-width: 500px; margin:40px auto;">
+    <h2>🛒 ĐẶT MUA THẺ CÀO</h2>
+    <div style="text-align:center; margin-bottom:15px; background:#fff; padding:10px; border-radius:8px;"><img src="{{ card_info.img }}" style="height:45px; object-fit:contain;"></div>
+    <p>Bạn chọn: <b style="color:#dfb76c;">{{ card_info.name }}</b></p>
+    <form method="POST" action="/process-buy/{{ card_key }}">
+        <div class="form-group"><label>Chọn mệnh giá:</label><select name="buy_amount">{% for d in denominations %}<option value="{{ d }}">{{ d }}đ</option>{% endfor %}</select></div>
+        <button type="submit">XÁC NHẬN MUA</button>
+    </form>
+</div>
+""" + SUPPORT_BALLOON
+
+ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:#f44336; font-weight:bold;'>[ADMIN]</span><a href='/logout' class='logout-btn'>Đăng xuất</a></div></div>" + """
+<div class="container active" style="max-width: 950px; margin:30px auto;">
+    <h2>🔒 TRANG QUẢN TRỊ ADMIN</h2>
+    <div style="background: #1c1f2b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border:1px solid #383d52;">
+        <h3>🔍 TRA CỨU SỐ DƯ TÀI KHOẢN</h3>
+        <form method="GET" action="/secret-admin-panel"><div style="display:flex; gap:10px;"><input type="text" name="search_user" placeholder="Nhập chính xác tên tài khoản..." value="{{ search_keyword }}" required><button type="submit" style="width:auto;">Tìm Kiếm</button></div></form>
+        {% if search_keyword %}
+            <p style="margin-top:10px;">+ {% if search_result %} 👤 Tên: <b>{{ search_result.get('username') }}</b> | 💰 Số dư: <b style="color:#4caf50;">{{ search_result.get('balance') }}đ</b> | 📞 Gmail: <b>{{ search_result.get('contact') }}</b>{% else %} Không thấy user: "{{ search_keyword }}"{% endif %} <a href="/secret-admin-panel" style="color:#ff5252; margin-left:10px;">✖ Đóng</a></p>
+        {% endif %}
+    </div>
+    <div style="background: #2a2115; padding: 15px; border-radius: 8px; margin-bottom: 20px; border:1px solid #ff9800;">
+        <h3>🎁 GIFT TIỀN HỆ THỐNG</h3>
+        <form method="POST" action="/admin/gift"><div class="form-group"><input type="text" name="gift_username" placeholder="Tên tài khoản..." required></div><div class="form-group"><input type="number" name="gift_amount" placeholder="Số tiền..." required></div><button type="submit" style="background:#ff9800; color:#000;">XÁC NHẬN GIFT</button></form>
+    </div>
+    <h3>🚨 DANH SÁCH THẺ CHỜ DUYỆT</h3>
+    <table>
+        <tr><th>Tài khoản</th><th>Loại</th><th>Mệnh giá</th><th>Seri</th><th>Mã</th><th>Hành động</th></tr>
+        {% for c in all_cards %}
+        <tr><td>{{ c.get('username','Ẩn danh') }}</td><td>{{ c.get('type','').upper() }}</td><td>{{ c.get('amount',0) }}đ</td><td>{{ c.get('serial','') }}</td><td>{{ c.get('code','') }}</td><td><a href="/admin/approve/{{ c.get('id') }}" style="color:#4caf50; font-weight:bold;">[ĐÚNG]</a> | <a href="/admin/reject/{{ c.get('id') }}" style="color:#f44336; font-weight:bold;">[SAI]</a></td></tr>
+        {% endfor %}
+    </table>
+    <br><h3>🛒 ĐƠN MUA THẺ & ĐƠN NẠP GAME</h3>
+    <table>
+        <tr><th>Người mua</th><th>Gmail nhận / Coupon</th><th>Loại đơn</th><th>Mệnh giá gốc</th><th>Xử lý</th></tr>
+        {% for b in all_bought_cards %}
+        <tr><td>{{ b.get('username','Ẩn danh') }}</td><td style="color:#ff5252; font-weight:bold;">{{ b.get('contact_info','') }}</td><td>{{ b.get('type','').upper() }}</td><td>{{ b.get('amount',0) }}đ</td><td><a href="/admin/complete-buy/{{ b.get('id') }}" style="background:#4caf50; color:white; padding:6px 10px; text-decoration:none; border-radius:4px; font-weight:bold;">✓ ĐÃ GỬI</a></td></tr>
+        {% endfor %}
+    </table>
+</div>
+""" + SUPPORT_BALLOON
+@app.route('/robots.txt')
 def robots():
     r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
     return Response(r, mimetype='text/plain')
@@ -407,3 +476,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    
