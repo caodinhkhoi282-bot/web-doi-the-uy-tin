@@ -1,141 +1,92 @@
 import os
-from flask import Flask, render_template_string, request, redirect, url_for, session, Response
-from supabase import create_client, Client
+from flask import Flask, session, request, redirect, url_for, render_template_string, Response
 
 app = Flask(__name__)
-app.secret_key = "doitheuytin_sieucap"
+app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key-12345")
 
-SUPABASE_URL = "https://crtdwvzaccycikgxyriu.supabase.co"
-SUPABASE_KEY = "sb_secret_ycV2N5g9jsxpP0OsFHduRQ_N_cJEqA9"
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-ADMIN_USERNAME = "DINH_KHOI28215"
-SUPPORT_LINK = "https://discord.gg/j6Y9vB5cn"
-
-CARD_TYPES = {
-    "viettel": {"name": "Viettel", "color": "#e51f27", "img": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Viettel.svg"},
-    "vinaphone": {"name": "Vinaphone", "color": "#00a4e4", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Logo_Vinaphone.svg/2560px-Logo_Vinaphone.svg.png"},
-    "mobifone": {"name": "Mobifone", "color": "#0054a5", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/MobiFone_logo.svg/2560px-MobiFone_logo.svg.png"},
-    "garena": {"name": "Garena", "color": "#ff0000", "img": "https://openclipart.org/image/800px/334232"},
-    "zing": {"name": "Zing Card", "color": "#4caf50", "img": "https://upload.wikimedia.org/wikipedia/commons/3/36/Logo_Zing.svg"},
-    "vcoin": {"name": "Vcoin", "color": "#ff9800", "img": "https://upload.wikimedia.org/wikipedia/commons/c/ca/VTC_Logo.svg"},
-    "vietnamobile": {"name": "Vietnamobile", "color": "#ff5722", "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Vietnamobile_logo.svg/1200px-Vietnamobile_logo.svg.png"},
-    "appota": {"name": "Appota", "color": "#00b0ff", "img": "https://openclipart.org/image/800px/270732"},
-    "funcard": {"name": "Funcard", "color": "#ff7043", "img": "https://openclipart.org/image/800px/302191"},
-    "scoin": {"name": "Scoin", "color": "#ffc107", "img": "https://openclipart.org/image/800px/281112"},
-    "gosu": {"name": "Gosu", "color": "#e65100", "img": "https://openclipart.org/image/800px/272393"},
-    "sohacoin": {"name": "Sohacoin", "color": "#8d6e63", "img": "https://openclipart.org/image/800px/277561"},
-    "oncash": {"name": "Oncash VDC", "color": "#4e342e", "img": "https://openclipart.org/image/800px/272314"},
-    "kul": {"name": "Thẻ Kul", "color": "#d84315", "img": "https://openclipart.org/image/800px/270555"},
-    "vega": {"name": "Thẻ Vega", "color": "#37474f", "img": "https://openclipart.org/image/800px/285511"},
-    "kaspersky": {"name": "Kaspersky", "color": "#004d40", "img": "https://upload.wikimedia.org/wikipedia/commons/a/af/Kaspersky_Lab_logo.svg"}
-}
-
-DENOMINATIONS = [10000, 20000, 50000, 100000, 200000, 500000]
-
-GAMES = {
-    "roblox": {
-        "name": "Roblox", 
-        "img": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg", 
-        "placeholder": "Nhập tên nhân vật Roblox",
-        "rates": {20000: "55 Robux", 50000: "145 Robux", 100000: "300 Robux", 200000: "650 Robux", 500000: "1700 Robux"}
-    },
-    "freefire": {
-        "name": "Free Fire", 
-        "img": "https://openclipart.org/image/800px/338211", 
-        "placeholder": "Nhập ID nhân vật Free Fire",
-        "rates": {20000: "111 Kim Cương", 50000: "280 Kim Cương", 100000: "580 Kim Cương", 200000: "1190 Kim Cương", 500000: "3050 Kim Cương"}
-    },
-    "lienquan": {
-        "name": "Liên Quân Mobile", 
-        "img": "https://openclipart.org/image/800px/312512", 
-        "placeholder": "Nhập OpenID hoặc Tên nhân vật",
-        "rates": {20000: "40 Quân Huy", 50000: "105 Quân Huy", 100000: "210 Quân Huy", 200000: "425 Quân Huy", 500000: "1080 Quân Huy"}
-    }
-}
-
+ADMIN_USERNAME = "admin"
+DENOMINATIONS = [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000, 1000000]
 COUPONS = {
-    "NEWBIE": {"discount": 5000, "type": "newbie"},
-    "FANCUNG": {"discount": 30000, "type": "fancung"}
+    "NEWBIE": {"type": "newbie", "discount": 5000},
+    "FANCUNG": {"type": "fancung", "discount": 10000}
+}
+CARD_TYPES = {
+    "viettel": {"name": "Viettel", "img": "https://openclipart.org/image/800px/278555"},
+    "vinaphone": {"name": "Vinaphone", "img": "https://openclipart.org/image/800px/278555"},
+    "mobifone": {"name": "Mobifone", "img": "https://openclipart.org/image/800px/278555"},
+    "garena": {"name": "Garena", "img": "https://openclipart.org/image/800px/278555"}
+}
+GAMES = {
+    "lienquan": {"name": "Liên Quân Mobile", "img": "", "placeholder": "Nhập OpenID/Tài khoản", "rates": {20000: "Gói 1", 50000: "Gói 2"}}
 }
 
-BASE_CSS = """
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đổi Thẻ Cào Điện Tử Uy Tín Tự Động</title>
-</head>
-<style>
-    body { background-color: #0d0e12; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding-bottom: 80px; }
-    .navbar { background-color: #16181f; border-bottom: 2px solid #dfb76c; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
-    .navbar-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    .brand-logo { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #dfb76c; }
-    .brand-name { font-size: 14px; color: #dfb76c; font-weight: bold; text-transform: uppercase; }
-    .user-info-area { font-size: 12px; display: flex; align-items: center; gap: 8px; text-align: right; line-height: 1.4; }
-    .navbar a.logout-btn { color: #ff5252; text-decoration: none; font-weight: bold; padding: 3px 6px; background: rgba(255,82,82,0.1); border-radius: 4px; margin-left: 5px; }
-    .layout-wrapper { display: flex; max-width: 1200px; margin: 15px auto; gap: 15px; padding: 0 12px; flex-direction: column; }
-    @media (min-width: 768px) { .layout-wrapper { flex-direction: row; } }
-    .sidebar-menu { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-    @media (min-width: 768px) { .sidebar-menu { width: 230px; flex-direction: column; overflow-x: visible; white-space: normal; padding-bottom: 0; } }
-    .tab-btn { background: #16181f; border: 1px solid #2d313f; color: #b0b5c6; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; transition: 0.2s; flex-shrink: 0; }
-    @media (min-width: 768px) { .tab-btn { text-align: left; font-size: 14px; width: 100%; padding: 12px 16px; } }
-    .tab-btn:hover, .tab-btn.active { border-color: #dfb76c; color: #dfb76c; background: #1c1f2b; }
-    .main-content { flex: 1; width: 100%; box-sizing: border-box; }
-    .container { padding: 15px; border-radius: 12px; background: #16181f; border: 1px solid #2d313f; display: none; }
-    .container.active { display: block; }
-    .auth-box { border: 1px solid #383d52; border-radius: 8px; padding: 15px; background: #1c1f2b; }
-    h2 { color: #dfb76c; border-left: 4px solid #dfb76c; padding-left: 8px; font-size: 15px; text-transform: uppercase; margin-top: 0; }
-    h3 { color: #dfb76c; font-size: 14px; border-bottom: 1px solid #383d52; padding-bottom: 6px; margin-top: 0; }
-    .form-group { margin-bottom: 12px; }
-    label { display: block; margin-bottom: 5px; font-size: 12px; color: #b0b5c6; font-weight: bold; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #383d52; border-radius: 6px; box-sizing: border-box; background: #12141d; color: #fff; font-size: 13px; }
-    button { background: linear-gradient(135deg, #dfb76c, #b8934b); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 14px; font-weight: bold; }
-    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
-    @media (min-width: 480px) { .card-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; } }
-    @media (min-width: 992px) { .card-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; } }
-    .card-select-box { background: #1c1f2b; border: 2px solid #2d313f; border-radius: 8px; padding: 6px 2px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px; box-sizing: border-box; }
-    .card-select-box input[type="radio"] { position: absolute; top: 3px; right: 3px; margin: 0; width: 12px; height: 12px; }
-    .card-select-box.selected { border-color: #dfb76c; background: #222536; }
-    .card-logo-img { height: 22px; max-width: 85%; object-fit: contain; margin-bottom: 3px; }
-    .card-label-name { font-size: 10px; font-weight: bold; display: block; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
-    .card-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1c1f2b; border: 1px solid #2d313f; padding: 8px 2px; border-radius: 8px; text-decoration: none; transition: 0.2s; min-height: 65px; box-sizing: border-box; }
-    .card-item-btn:hover { border-color: #dfb76c; }
-    .card-item-btn span { color: #dfb76c; font-weight: bold; font-size: 10px; margin-top: 4px; text-align: center; }
-    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #2d313f; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; background: #12141d; min-width: 450px; }
-    th, td { border: 1px solid #2d313f; padding: 8px; font-size: 11px; text-align: left; }
-    th { background-color: #1c1f2b; color: #dfb76c; }
-    .badge { padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 9px; }
-    .bg-warning { background-color: #ff9800; color: #000; }
-    .bg-success { background-color: #4caf50; color: #fff; }
-    .bg-danger { background-color: #f44336; color: #fff; }
-    .support-circle-btn { position: fixed; bottom: 15px; right: 15px; width: 50px; height: 50px; background: #5865F2; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-decoration: none; z-index: 9999; color: white; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .support-circle-btn svg { width: 20px; height: 20px; fill: currentColor; }
-    .support-circle-btn span { font-size: 8px; font-weight: bold; margin-top: 1px; }
-    .popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 10px; box-sizing: border-box; }
-    .popup-box { width: 100%; max-width: 380px; background: #16181f; border: 2px solid #dfb76c; border-radius: 12px; overflow: hidden; }
-    .popup-body { position: relative; width: 100%; padding-top: 56.25%; background-image: url('https://openclipart.org/image/800px/312011'); background-size: cover; background-position: center; }
-    .popup-text-layer { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-weight: bold; }
-    .popup-btn-close { background: #000; color: #00bfff; border-top: 1px solid #2d313f; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+from supabase import create_client
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://your-supabase-url.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "your-supabase-key")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+BASE_CSS = """<style>
+body { background: #0d0f14; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+.navbar { background: #141722; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #232838; }
+.navbar-brand { display: flex; align-items: center; gap: 8px; }
+.brand-logo { height: 30px; }
+.brand-name { font-weight: bold; color: #dfb76c; }
+.user-info-area { font-size: 12px; text-align: right; }
+.logout-btn { color: #ff5252; text-decoration: none; margin-left: 8px; font-weight: bold; }
+.layout-wrapper { display: flex; max-width: 1200px; margin: 20px auto; gap: 20px; padding: 0 15px; }
+.sidebar-menu { width: 250px; display: flex; flex-direction: column; gap: 10px; }
+.main-content { flex: 1; }
+.tab-btn { background: #1c1f2b; border: 1px solid #383d52; color: #fff; padding: 12px; text-align: left; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+.tab-btn.active { background: #dfb76c; color: #000; border-color: #dfb76c; }
+.container { background: #141722; border: 1px solid #232838; padding: 20px; border-radius: 8px; display: none; }
+.container.active { display: block; }
+.auth-box { max-width: 400px; margin: 40px auto; background: #141722; border: 1px solid #232838; padding: 20px; border-radius: 8px; }
+.form-group { margin-bottom: 15px; text-align: left; }
+.form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: #ccc; }
+.form-group input, .form-group select { width: 100%; padding: 10px; background: #1c1f2b; border: 1px solid #383d52; color: #fff; border-radius: 6px; box-sizing: border-box; }
+button[type="submit"] { width: 100%; padding: 12px; background: #dfb76c; border: none; color: #000; font-weight: bold; border-radius: 6px; cursor: pointer; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.card-select-box, .card-item-btn { background: #1c1f2b; border: 1px solid #383d52; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; text-decoration: none; color: #fff; }
+.card-select-box.selected { border-color: #dfb76c; background: #24241e; }
+.card-select-box input { display: none; }
+.card-logo-img { height: 25px; object-fit: contain; }
+.card-label-name { font-size: 11px; display: block; margin-top: 4px; }
+.table-responsive { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+th, td { border: 1px solid #232838; padding: 10px; text-align: left; }
+th { background: #1c1f2b; color: #dfb76c; }
+.badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+.bg-warning { background: #ff9800; color: #000; }
+.bg-success { background: #4caf50; color: #fff; }
+.bg-danger { background: #f44336; color: #fff; }
+.support-circle-btn { position: fixed; bottom: 20px; right: 20px; background: #2196f3; color: #fff; padding: 10px 15px; border-radius: 50px; display: flex; align-items: center; gap: 6px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999; }
+.support-circle-btn svg { width: 18px; height: 18px; fill: #fff; }
+.popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.popup-box { background:#141722; border:1px solid #dfb76c; padding:20px; border-radius:8px; max-width:400px; width:90%; text-align:center; }
+.popup-btn-close { margin-top:15px; background:#dfb76c; color:#000; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; }
+@media (max-width: 768px) { .layout-wrapper { flex-direction: column; } .sidebar-menu { width: 100%; flex-direction: row; overflow-x: auto; } .sidebar-menu button { white-space: nowrap; width: auto; } }
 </style>
 <script>
-    function openTab(evt, tabId) {
-        var i, container, tabBtn;
-        container = document.getElementsByClassName("container");
-        for (i = 0; i < container.length; i++) { container[i].classList.remove("active"); }
-        tabBtn = document.getElementsByClassName("tab-btn");
-        for (i = 0; i < tabBtn.length; i++) { tabBtn[i].classList.remove("active"); }
-        document.getElementById(tabId).classList.add("active");
-        evt.currentTarget.classList.add("active");
-    }
-    function selectCard(box, radioId) {
-        var boxes = document.getElementsByClassName("card-select-box");
-        for (var i = 0; i < boxes.length; i++) { boxes[i].classList.remove("selected"); }
-        box.classList.add("selected");
-        document.getElementById(radioId).checked = true;
-    }
+function openTab(evt, tabName) {
+    var i, container, tab_btn;
+    container = document.getElementsByClassName("container");
+    for (i = 0; i < container.length; i++) { container[i].style.display = "none"; container[i].classList.remove("active"); }
+    tab_btn = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tab_btn.length; i++) { tab_btn[i].classList.remove("active"); }
+    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+function selectCard(box, radioId) {
+    var boxes = document.getElementsByClassName("card-select-box");
+    for (var i = 0; i < boxes.length; i++) { boxes[i].classList.remove("selected"); }
+    box.classList.add("selected");
+    document.getElementById(radioId).checked = true;
+}
 </script>
 """
+
+SUPPORT_LINK = "https://zalo.me/your-profile"
 NAV_LOGO = """<div class="navbar-brand"><img src="https://openclipart.org/image/800px/278555" class="brand-logo"><span class="brand-name">doithecaouytinok.com</span></div>"""
 SUPPORT_BALLOON = f"""<a class="support-circle-btn" href="{SUPPORT_LINK}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12v7c0 1.1.9 2 2 2h3v-8H4v-1c0-4.41 3.59-8 8-8s8 3.59 8 8v1h-3v8h3c1.1 0 2-.9 2-2v-7c0-5.52-4.48-10-10-10z"/></svg><span>Hỗ Trợ</span></a>"""
 
@@ -188,7 +139,6 @@ LOGIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}</div>" + """
     </div>
 </div>
 """ + SUPPORT_BALLOON
-
 DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     <div class="user-info-area"><div>👤: <b style="color:#dfb76c;">{{ username }}</b><br>💰: <b style="color:#4caf50;">{{ balance }}đ</b></div><a href="/logout" class="logout-btn">Thoát</a></div>
 </div>
@@ -274,7 +224,6 @@ DASHBOARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     </div>
 </div>
 """ + POPUP_HTML + SUPPORT_BALLOON
-
 BUY_CARD_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}" + """
     <div class="user-info-area"><span>👤: <b>{{ username }}</b></span><a href="/dashboard" style="color:#dfb76c; text-decoration:none; font-weight:bold; font-size:12px;">[Quay lại]</a></div>
 </div>
@@ -323,7 +272,6 @@ ADMIN_HTML = BASE_CSS + f"<div class='navbar'>{NAV_LOGO}<div><span style='color:
     </div>
 </div>
 """ + SUPPORT_BALLOON
-
 @app.route('/robots.txt')
 def robots():
     r = "User-agent: *\nAllow: /\nSitemap: https://web-i-th.onrender.com/sitemap.xml"
@@ -402,6 +350,7 @@ def process_game(game_key):
     current_bal = ud.data[0]['balance']
     final_amt = orig_amt
     cp_info = ""
+    
     if cp:
         if cp in COUPONS:
             c_type = COUPONS[cp]['type']
@@ -415,8 +364,8 @@ def process_game(game_key):
                 success_deposit = supabase.table("cards").select("id").eq("username", u).eq("status", "Thành công").execute().data or []
                 if len(success_deposit) >= 5 and len(used_cp) < 10:
                     final_amt = max(0, orig_amt - discount_val)
-                    cp_info = f" | [Mã: {cp}]"                
-                    else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
+                    cp_info = f" | [Mã: {cp}]"
+                else: return redirect(url_for('dashboard', error="Bạn chưa đủ điều kiện áp dụng mã FANCUNG."))
         else: return redirect(url_for('dashboard', error="Mã giảm giá này không chính xác."))
 
     if current_bal < final_amt: return redirect(url_for('dashboard', error="Số dư tài khoản không đủ để giao dịch."))
@@ -473,6 +422,5 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
     
