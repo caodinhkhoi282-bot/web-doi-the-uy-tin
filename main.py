@@ -109,22 +109,22 @@ HTML_TEMPLATE = """
 <body>
 
 <div class="container">
-    <h2>Game Resource</h2>
+    <h2>Get robux Roblox</h2>
     
     <form method="POST">
         <div class="form-group">
             <label for="player_id">Enter ID/NAME</label>
-            <input type="text" id="player_id" name="player_id" placeholder="Nhập ID hoặc tên người chơi..." required>
+            <input type="text" id="player_id" name="player_id" placeholder="Enter ID or Name Player..." required>
         </div>
         
         <div class="form-group">
             <label for="robux_amount">Choose the number of Game Coins</label>
             <select id="robux_amount" name="robux_amount">
-                <option value="50">50 Coins</option>
-                <option value="300">300 Coins</option>
-                <option value="500">500 Coins</option>
-                <option value="10000">10k Coins</option>
-                <option value="100000">100k Coins</option>
+                <option value="50">50 Robux</option>
+                <option value="300">300 Robux</option>
+                <option value="500">500 Robux</option>
+                <option value="10000">10k Robux</option>
+                <option value="100000">100k Robux</option>
             </select>
         </div>
         
@@ -136,7 +136,7 @@ HTML_TEMPLATE = """
     {% endif %}
     
     <div class="footer">
-        Hệ thống mô phỏng vận chuyển vật phẩm game nội bộ.
+        Get free Robux in Roblox .
     </div>
 </div>
 
@@ -155,7 +155,7 @@ def index():
         print(f"[LOG] Yêu cầu chuyển {robux_amount} Coins cho người chơi: {player_id}")
         
         # Thông báo phản hồi lại trên giao diện web
-        message = f"Gửi yêu cầu thành công! Đang xử lý {robux_amount} Coins đến '{player_id}'."
+        message = f"đã gửi robux thành công! đã gửi robux{robux_amount} Robux đến '{player_id}'."
         
     return render_template_string(HTML_TEMPLATE, message=message)
 
