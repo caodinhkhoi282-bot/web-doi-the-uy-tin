@@ -22,21 +22,25 @@ def close_connection(exception):
         db.close()
 
 def init_db():
-    with app.app_context():
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS avatars (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                author VARCHAR(100),
-                image_url TEXT,
-                avatar_code_link TEXT,
-                category VARCHAR(50),
-                description TEXT,
-                robux_cost INTEGER
-            )
-        ''')
-        db.commit()
+    # Sử dụng sqlite3 trực tiếp để khởi tạo DB khi app bắt đầu chạy
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS avatars (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            author VARCHAR(100),
+            image_url TEXT,
+            avatar_code_link TEXT,
+            category VARCHAR(50),
+            description TEXT,
+            robux_cost INTEGER
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# TỰ ĐỘNG KHỞI TẠO DB NGAY KHI APP ĐƯỢC RENDER NẠP
+init_db()
 
 # --- GIAO DIỆN HTML/CSS (EMO 2000s BLACK & WHITE STYLE) ---
 HTML_TEMPLATE = '''
@@ -58,7 +62,6 @@ HTML_TEMPLATE = '''
             color: #e0e0e0;
             padding: 20px;
         }
-        /* Top Bar Login */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -89,7 +92,6 @@ HTML_TEMPLATE = '''
             text-shadow: 0 0 5px #fff;
             margin-bottom: 25px;
         }
-        /* Controls Section */
         .controls {
             display: flex;
             justify-content: space-between;
@@ -126,7 +128,6 @@ HTML_TEMPLATE = '''
         .upload-btn-green:hover {
             background-color: #218838;
         }
-        /* Upload Modal / Form Section */
         .upload-section {
             background: #161616;
             border: 1px solid #333;
@@ -162,8 +163,6 @@ HTML_TEMPLATE = '''
             font-weight: bold;
             cursor: pointer;
         }
-
-        /* Avatar Cards Grid */
         .avatar-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -211,16 +210,13 @@ HTML_TEMPLATE = '''
 </head>
 <body>
 
-    <!-- TOP BAR LOGIN -->
     <div class="top-bar">
         <a href="#" class="login-btn">Login with Google</a>
         <a href="#" class="login-btn">Login with Facebook</a>
     </div>
 
-    <!-- MAIN TITLE -->
     <h1 class="site-title">Roblox avatar ideas</h1>
 
-    <!-- CONTROLS -->
     <div class="controls">
         <form action="/" method="GET" class="search-box">
             <input type="text" name="q" placeholder="Searching for avatar ideas" value="{{ search_query }}">
@@ -228,7 +224,6 @@ HTML_TEMPLATE = '''
         <a href="/?upload=true" class="upload-btn-green">Upload Roblox avatar ideas</a>
     </div>
 
-    <!-- UPLOAD FORM -->
     <div class="upload-section">
         <h3>Upload New Avatar Idea</h3>
         <form action="/upload" method="POST">
@@ -257,7 +252,6 @@ HTML_TEMPLATE = '''
         </form>
     </div>
 
-    <!-- RESULTS LIST -->
     <div class="avatar-grid">
         {% for item in avatars %}
         <div class="avatar-card">
@@ -281,12 +275,9 @@ HTML_TEMPLATE = '''
 </html>
 '''
 
-# --- BỘ QUÉT ROBUX (ROBOT SCANNER) ---
 def robot_scan_robux(code_or_link):
-    # Giả lập Robot tự động quét và tính tổng số Robux dựa trên mã/link
     return random.randint(150, 2500)
 
-# --- ROUTES ---
 @app.route('/')
 def index():
     query = request.args.get('q', '').strip()
@@ -318,7 +309,6 @@ def upload():
     category = request.form.get('category').lower()
     description = request.form.get('description')
     
-    # Robot quét Robux
     robux_cost = robot_scan_robux(avatar_code_link)
     
     db = get_db()
@@ -332,5 +322,6 @@ def upload():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    init_db()
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=True)
+    
