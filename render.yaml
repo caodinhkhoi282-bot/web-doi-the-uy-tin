@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: Delta.excute
+    name: Delta.execute
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn main:app
