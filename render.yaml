@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: Khôi Execute 
+    name: khoi-bypass
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn main:app
-    
+    startCommand: python main.py
