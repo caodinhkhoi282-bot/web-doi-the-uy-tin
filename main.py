@@ -1,344 +1,399 @@
 from flask import Flask, render_template_string, request, jsonify
-import requests
-import json
 import os
 
 app = Flask(__name__)
 
-# ------------------------------------------------------------------
-# TRANG CHÍNH (GIAO DIỆN WEB)
-# ------------------------------------------------------------------
 HTML = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Khôi Bypass Key</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Ẩn thanh URL trên mobile -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Roblox - Gửi Robux</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #0a0a12;
+            background: #1a1a2e;
             color: #fff;
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-start;
+            padding: 20px 10px;
         }
         .container {
-            background: #14141f;
-            border-radius: 28px;
-            padding: 32px 28px;
-            max-width: 500px;
+            max-width: 800px;
             width: 100%;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-            border: 1px solid #2a2a3e;
+            background: #2d2d44;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            overflow: hidden;
+            border: 1px solid #3a3a5a;
+        }
+        .header {
+            background: #1b1b2f;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3a3a5a;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .logo {
-            text-align: center;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
-            background: linear-gradient(135deg, #00d4ff, #7b2ffc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 6px;
-        }
-        .sub {
-            text-align: center;
-            color: #8888aa;
-            font-size: 14px;
-            margin-bottom: 28px;
-            border-bottom: 1px solid #222;
-            padding-bottom: 14px;
-        }
-        .input-group {
+            color: #00bfff;
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            align-items: center;
+            gap: 8px;
         }
-        .input-group label {
+        .logo i { color: #fff; }
+        .balance {
+            background: #1f1f3a;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 18px;
             font-weight: 600;
-            font-size: 15px;
-            color: #ccc;
+            border: 1px solid #3a3a5a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .input-group input {
-            background: #0d0d18;
-            border: 1px solid #2a2a44;
-            border-radius: 14px;
-            padding: 16px 18px;
+        .balance i { color: #ffd700; }
+        .balance span { color: #fff; }
+        .nav {
+            background: #22223b;
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid #3a3a5a;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            color: #aaa;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        .nav a:hover, .nav a.active {
+            background: #3a3a5a;
+            color: #fff;
+        }
+        .content { padding: 20px; }
+        .search-section {
+            background: #1f1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a5a;
+        }
+        .search-section h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #eee;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-box input {
+            flex: 1;
+            background: #0d0d1a;
+            border: 1px solid #3a3a5a;
+            border-radius: 30px;
+            padding: 12px 18px;
             color: #fff;
             font-size: 16px;
             outline: none;
-            width: 100%;
+            min-width: 200px;
         }
-        .input-group input:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
-        }
-        .btn {
-            background: #00d4ff;
+        .search-box input:focus { border-color: #00bfff; }
+        .search-box button {
+            background: #00bfff;
             border: none;
-            color: #0a0a12;
+            color: #000;
             font-weight: 700;
-            font-size: 18px;
-            padding: 16px;
-            border-radius: 14px;
+            padding: 12px 24px;
+            border-radius: 30px;
             cursor: pointer;
-            width: 100%;
+            font-size: 16px;
             transition: 0.2s;
         }
-        .btn:active { transform: scale(0.97); }
-        .btn:disabled { opacity: 0.5; pointer-events: none; }
-        .status-box {
-            background: #0d0d18;
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-top: 20px;
-            min-height: 70px;
-            border: 1px solid #1e1e32;
-            display: flex;
+        .search-box button:hover { background: #00a0d0; }
+        .user-result {
+            background: #1a1a30;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid #3a3a5a;
+            display: none;
             align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-        }
-        .status-box .loading {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #aaa;
-            font-size: 15px;
-        }
-        .status-box .loading .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #1e1e32;
-            border-top: 3px solid #00d4ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .status-box .result { display: none; width: 100%; }
-        .status-box .result .key-display {
-            background: #0a0a12;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 18px;
-            word-break: break-all;
-            color: #00d4ff;
-            border: 1px solid #2a2a44;
-            margin-bottom: 12px;
-        }
-        .status-box .result .actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+            gap: 16px;
             flex-wrap: wrap;
         }
-        .status-box .result .actions button {
-            background: #2a2a44;
-            border: none;
+        .user-result .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #3a3a5a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
             color: #fff;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            flex: 1;
-            min-width: 100px;
         }
-        .status-box .result .actions button.copy {
+        .user-result .info { flex: 1; }
+        .user-result .info .name { font-size: 18px; font-weight: 600; }
+        .user-result .info .id { color: #aaa; font-size: 13px; }
+        .user-result .send-btn {
             background: #00c853;
+            border: none;
             color: #000;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
         }
-        .status-box .result .actions button.back {
-            background: #b71c1c;
-        }
-        .status-box .error { color: #ff5252; font-size: 15px; }
-        .hidden { display: none !important; }
-        .footer {
+        .send-form {
+            background: #1f1f3a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #3a3a5a;
             margin-top: 20px;
+            display: none;
+        }
+        .send-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #ccc;
+        }
+        .send-form input {
+            width: 100%;
+            background: #0d0d1a;
+            border: 1px solid #3a3a5a;
+            border-radius: 30px;
+            padding: 12px 18px;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .send-form input:focus { border-color: #00bfff; }
+        .send-form .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .send-form .actions button {
+            padding: 10px 28px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        .send-form .actions .confirm { background: #00c853; color: #000; }
+        .send-form .actions .cancel { background: #b71c1c; color: #fff; }
+        .send-form .actions button:active { transform: scale(0.97); }
+        .toast {
+            background: #1a1a30;
+            border: 1px solid #3a3a5a;
+            border-radius: 30px;
+            padding: 14px 24px;
+            color: #fff;
+            font-size: 15px;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 999;
             text-align: center;
-            font-size: 12px;
-            color: #444;
-            border-top: 1px solid #1a1a2a;
-            padding-top: 16px;
+            max-width: 90%;
+        }
+        .toast.success { border-color: #00c853; }
+        .toast.error { border-color: #b71c1c; }
+        .toast i { margin-right: 10px; }
+        @media (max-width: 600px) {
+            .header { flex-direction: column; align-items: stretch; text-align: center; }
+            .balance { justify-content: center; }
+            .nav { justify-content: center; }
+            .search-box button { width: 100%; }
+            .user-result { flex-direction: column; align-items: stretch; text-align: center; }
+            .send-form .actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="app">
-        <div class="logo">⚡ Khôi Bypass</div>
-        <div class="sub">Hỗ trợ Linkvertise, Link1s, Linkm4, v.v.</div>
 
-        <div id="stepUrl">
-            <div class="input-group">
-                <label>🔗 URL cần bypass</label>
-                <input type="text" id="urlInput" placeholder="https://linkvertise.com/...">
-            </div>
-            <button class="btn" id="submitBtn">Xác nhận</button>
-        </div>
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">Thành công</span></div>
 
-        <div class="status-box" id="statusBox">
-            <div id="defaultStatus" style="color:#666; font-size:14px;">Nhập URL và bấm Xác nhận</div>
-            <div id="loadingStatus" class="loading hidden">
-                <div class="spinner"></div>
-                <span>Đang lấy key ...</span>
-            </div>
-            <div id="resultStatus" class="result">
-                <div class="key-display" id="keyDisplay">KEY_HERE</div>
-                <div class="actions">
-                    <button class="copy" id="copyBtn">📋 Copy</button>
-                    <button class="back" id="backBtn">↩ Bỏ qua</button>
-                </div>
-            </div>
-            <div id="errorStatus" class="error hidden">Đã xảy ra lỗi, vui lòng thử lại.</div>
-        </div>
-
-        <div class="footer">🔹 Delta • Arceus • Hydrogen • các executor khác</div>
+<div class="container">
+    <div class="header">
+        <div class="logo"><i class="fab fa-roblox"></i> Roblox</div>
+        <div class="balance"><i class="fas fa-coins"></i> <span id="balanceDisplay">5,684,000</span> RB</div>
     </div>
 
-    <script>
-        const urlInput = document.getElementById('urlInput');
-        const submitBtn = document.getElementById('submitBtn');
-        const defaultStatus = document.getElementById('defaultStatus');
-        const loadingStatus = document.getElementById('loadingStatus');
-        const resultStatus = document.getElementById('resultStatus');
-        const errorStatus = document.getElementById('errorStatus');
-        const keyDisplay = document.getElementById('keyDisplay');
-        const copyBtn = document.getElementById('copyBtn');
-        const backBtn = document.getElementById('backBtn');
+    <div class="nav">
+        <a href="#" class="active"><i class="fas fa-home"></i> Trang chủ</a>
+        <a href="#"><i class="fas fa-users"></i> Bạn bè</a>
+        <a href="#"><i class="fas fa-gift"></i> Quà tặng</a>
+        <a href="#"><i class="fas fa-cog"></i> Cài đặt</a>
+    </div>
 
-        submitBtn.addEventListener('click', async function() {
-            const url = urlInput.value.trim();
-            if (!url) { alert('Vui lòng nhập URL.'); return; }
+    <div class="content">
+        <div class="search-section">
+            <h2><i class="fas fa-search"></i> Tìm người chơi</h2>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Nhập tên hoặc ID..." autocomplete="off">
+                <button id="searchBtn"><i class="fas fa-arrow-right"></i> Tìm</button>
+            </div>
+            <div class="user-result" id="userResult">
+                <div class="avatar" id="avatarDisplay"><i class="fas fa-user"></i></div>
+                <div class="info">
+                    <div class="name" id="userName">Tên</div>
+                    <div class="id" id="userId">ID: 123456789</div>
+                </div>
+                <button class="send-btn" id="sendBtn"><i class="fas fa-paper-plane"></i> Gửi Robux</button>
+            </div>
+        </div>
 
-            defaultStatus.classList.add('hidden');
-            loadingStatus.classList.remove('hidden');
-            resultStatus.style.display = 'none';
-            errorStatus.classList.add('hidden');
-            submitBtn.disabled = true;
+        <div class="send-form" id="sendForm">
+            <h3 style="margin-bottom:12px; color:#eee;"><i class="fas fa-paper-plane"></i> Gửi Robux</h3>
+            <label>Người nhận: <span id="receiverName" style="color:#00bfff;">---</span></label>
+            <label>Số Robux:</label>
+            <input type="number" id="amountInput" placeholder="Nhập số lượng..." min="1" max="5684000">
+            <div class="actions">
+                <button class="confirm" id="confirmSend"><i class="fas fa-check"></i> Xác nhận gửi</button>
+                <button class="cancel" id="cancelSend"><i class="fas fa-times"></i> Hủy</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-            try {
-                const response = await fetch('/bypass', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: url })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    keyDisplay.textContent = data.result;
-                    loadingStatus.classList.add('hidden');
-                    resultStatus.style.display = 'block';
-                } else {
-                    throw new Error(data.error || 'Không thể bypass');
-                }
-            } catch (err) {
-                loadingStatus.classList.add('hidden');
-                errorStatus.textContent = '❌ ' + err.message;
-                errorStatus.classList.remove('hidden');
-                setTimeout(() => resetToDefault(), 3000);
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
+<script>
+    const mockUsers = [
+        { id: 123456789, name: "KhoiPro", avatar: "👨‍💻" },
+        { id: 987654321, name: "RobloxMaster", avatar: "🎮" },
+        { id: 555555555, name: "GameThủ", avatar: "🕹️" },
+        { id: 111111111, name: "DevPro", avatar: "💻" },
+        { id: 222222222, name: "HackerX", avatar: "🤖" }
+    ];
 
-        copyBtn.addEventListener('click', function() {
-            const key = keyDisplay.textContent;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(key).then(() => {
-                    copyBtn.textContent = '✅ Copied!';
-                    setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 1500);
-                }).catch(() => fallbackCopy(key));
-            } else {
-                fallbackCopy(key);
-            }
-        });
+    let currentUser = null;
+    let balance = 5684000;
 
-        function fallbackCopy(text) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.left = '-9999px';
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy'); copyBtn.textContent = '✅ Copied!'; setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 1500); } catch(e) { alert('Không thể copy'); }
-            document.body.removeChild(ta);
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const userResult = document.getElementById('userResult');
+    const userName = document.getElementById('userName');
+    const userId = document.getElementById('userId');
+    const avatarDisplay = document.getElementById('avatarDisplay');
+    const sendBtn = document.getElementById('sendBtn');
+    const sendForm = document.getElementById('sendForm');
+    const receiverName = document.getElementById('receiverName');
+    const amountInput = document.getElementById('amountInput');
+    const confirmSend = document.getElementById('confirmSend');
+    const cancelSend = document.getElementById('cancelSend');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(message, type = 'success') {
+        toast.className = 'toast ' + type;
+        toastMsg.textContent = message;
+        toast.style.display = 'block';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function updateBalance() {
+        balanceDisplay.textContent = balance.toLocaleString();
+    }
+
+    function searchUser(query) {
+        query = query.trim().toLowerCase();
+        if (!query) { showToast('Vui lòng nhập tên hoặc ID.', 'error'); return null; }
+        const found = mockUsers.find(u =>
+            u.name.toLowerCase().includes(query) ||
+            String(u.id).includes(query)
+        );
+        if (!found) { showToast('Không tìm thấy người chơi.', 'error'); return null; }
+        return found;
+    }
+
+    function displayUser(user) {
+        currentUser = user;
+        userName.textContent = user.name;
+        userId.textContent = 'ID: ' + user.id;
+        avatarDisplay.innerHTML = user.avatar || '<i class="fas fa-user"></i>';
+        userResult.style.display = 'flex';
+        sendForm.style.display = 'none';
+    }
+
+    function handleSearch() {
+        const query = searchInput.value;
+        const user = searchUser(query);
+        if (user) displayUser(user);
+        else {
+            userResult.style.display = 'none';
+            sendForm.style.display = 'none';
         }
+    }
 
-        backBtn.addEventListener('click', resetToDefault);
+    searchBtn.addEventListener('click', handleSearch);
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
 
-        function resetToDefault() {
-            defaultStatus.classList.remove('hidden');
-            loadingStatus.classList.add('hidden');
-            resultStatus.style.display = 'none';
-            errorStatus.classList.add('hidden');
-            urlInput.value = '';
-            urlInput.focus();
-            submitBtn.disabled = false;
-        }
+    sendBtn.addEventListener('click', function() {
+        if (!currentUser) { showToast('Chưa chọn người nhận.', 'error'); return; }
+        receiverName.textContent = currentUser.name;
+        amountInput.value = '';
+        sendForm.style.display = 'block';
+        amountInput.focus();
+    });
 
-        urlInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') submitBtn.click();
-        });
-    </script>
+    cancelSend.addEventListener('click', function() {
+        sendForm.style.display = 'none';
+    });
+
+    confirmSend.addEventListener('click', function() {
+        if (!currentUser) { showToast('Không có người nhận.', 'error'); return; }
+        const amount = parseInt(amountInput.value);
+        if (!amount || amount <= 0) { showToast('Nhập số Robux hợp lệ.', 'error'); return; }
+        if (amount > balance) { showToast('Số dư không đủ! Bạn có ' + balance.toLocaleString() + ' RB.', 'error'); return; }
+        balance -= amount;
+        updateBalance();
+        showToast(`✅ Đã gửi ${amount.toLocaleString()} RB đến ${currentUser.name} (mô phỏng)`, 'success');
+        sendForm.style.display = 'none';
+        userResult.style.display = 'none';
+        currentUser = null;
+        searchInput.value = '';
+    });
+
+    updateBalance();
+</script>
 </body>
 </html>
 """
 
-# ------------------------------------------------------------------
-# API BYPASS (GỌI DỊCH VỤ BÊN NGOÀI)
-# ------------------------------------------------------------------
-def bypass_link(url):
-    """
-    Gọi API bypass.vip (miễn phí, hỗ trợ Linkvertise, Link1s, Linkm4)
-    Trả về key hoặc link đã bypass.
-    """
-    api_endpoint = "https://api.bypass.vip/"
-    payload = {"url": url}
-    headers = {"Content-Type": "application/json"}
-    try:
-        resp = requests.post(api_endpoint, json=payload, headers=headers, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get("status") == "success" and data.get("result"):
-            return data["result"]
-        else:
-            # Một số API trả về khác cấu trúc, thử check
-            if data.get("success") and data.get("bypassed"):
-                return data["bypassed"]
-            raise Exception("Phản hồi API không hợp lệ: " + json.dumps(data))
-    except Exception as e:
-        raise Exception(f"Lỗi gọi API: {str(e)}")
-
-# ------------------------------------------------------------------
-# ROUTE XỬ LÝ BYPASS
-# ------------------------------------------------------------------
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
     return render_template_string(HTML)
 
-@app.route('/bypass', methods=['POST'])
-def handle_bypass():
-    data = request.get_json()
-    if not data or 'url' not in data:
-        return jsonify({"success": False, "error": "Thiếu URL"}), 400
-    url = data['url'].strip()
-    if not url:
-        return jsonify({"success": False, "error": "URL rỗng"}), 400
-    try:
-        result = bypass_link(url)
-        return jsonify({"success": True, "result": result})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# ------------------------------------------------------------------
-# CHẠY APP
-# ------------------------------------------------------------------
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
